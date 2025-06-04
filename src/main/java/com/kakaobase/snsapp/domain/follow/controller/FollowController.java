@@ -73,7 +73,7 @@ public class FollowController {
         return CustomResponse.success("팔로우를 성공적으로 취소하였습니다.");
     }
 
-    @DeleteMapping("{userId}/followers")
+    @GetMapping("{userId}/followers")
     @Operation(
             summary = "팔로워 목록 요청",
             description = "특정유저를 팔로잉하는 회원 목록을 요청합니다"
@@ -93,5 +93,27 @@ public class FollowController {
             List<FollowResponse.UserInfo> response =followService.getFollowers(userId, limit, cursor);
 
             return CustomResponse.success("팔로워 목록이 정상적으로 조회되었습니다" , response);
+    }
+
+    @GetMapping("{userId}/followings")
+    @Operation(
+            summary = "팔로잉 목록 요청",
+            description = "특정유저를 팔로잉하는 회원 목록을 요청합니다"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "팔로우 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = CommentResponseDto.CreateCommentResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "로그인이 필요한 요청"),
+            @ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없음")
+    })
+    public CustomResponse<List<FollowResponse.UserInfo>> getFollowingList(
+            @PathVariable Long userId,
+            @Parameter(description = "한 번에 불러올 팔로워 수 (기본값: 22)") @RequestParam(required = false, defaultValue = "22") Integer limit,
+            @Parameter(description = "페이지네이션 커서 (이전 응답의 next_cursor)") @RequestParam(required = false) Long cursor
+    ) {
+        List<FollowResponse.UserInfo> response =followService.getFollowings(userId, limit, cursor);
+
+        return CustomResponse.success("팔로잉 목록이 정상적으로 조회되었습니다" , response);
     }
 }
