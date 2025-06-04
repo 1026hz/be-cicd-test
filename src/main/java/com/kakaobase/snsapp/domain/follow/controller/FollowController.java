@@ -64,6 +64,8 @@ public class FollowController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
+        followService.removeFollowing(targetUserId, userDetails);
+
         return CustomResponse.success("팔로우를 성공적으로 취소하였습니다.");
     }
 }
