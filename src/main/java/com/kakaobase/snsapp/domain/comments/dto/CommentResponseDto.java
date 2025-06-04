@@ -1,5 +1,6 @@
 package com.kakaobase.snsapp.domain.comments.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -26,10 +27,12 @@ public class CommentResponseDto {
             String nickname,
 
             @Schema(description = "회원 프로필 이미지 URL", example = "https://cdn.service.com/img1.jpg", nullable = true)
-            String profile_image,
+            @JsonProperty("image_url")
+            String imageUrl,
 
             @Schema(description = "팔로우 여부 (V2에서 구현)", example = "false")
-            boolean is_followed
+            @JsonProperty("is_followed")
+            boolean isFollowed
     ) {
         // 팔로우 정보 없이 생성하는 생성자 추가 (V2 전까지 임시로 사용)
         public UserInfo(Long id, String nickname, String profile_image) {
