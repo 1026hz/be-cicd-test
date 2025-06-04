@@ -28,7 +28,6 @@ public class Follow extends BaseCreatedTimeEntity {
 
     @Builder
     public Follow(Long id, Member followerUser, Member followingUser) {
-        this.id = id;
         this.followerUser = followerUser;
         this.followingUser = followingUser;
     }
