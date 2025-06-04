@@ -79,4 +79,12 @@ public class FollowService {
 
         return followConverter.toUserInfoList(followRepository.findFollowersByFollowingUserWithCursor(userId, limit, cursor));
     }
+
+    public List<FollowResponse.UserInfo> getFollowings(Long userId, Integer limit, Long cursor) {
+        if(!memberRepository.existsById(userId)){
+            throw new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "userId");
+        }
+
+        return followConverter.toUserInfoList(followRepository.findFollowingsByFollowerUserWithCursor(userId, limit, cursor));
+    }
 }
