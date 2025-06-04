@@ -3,6 +3,7 @@ package com.kakaobase.snsapp.domain.follow.service;
 
 import com.kakaobase.snsapp.domain.auth.principal.CustomUserDetails;
 import com.kakaobase.snsapp.domain.follow.converter.FollowConverter;
+import com.kakaobase.snsapp.domain.follow.dto.FollowResponse;
 import com.kakaobase.snsapp.domain.follow.entity.Follow;
 import com.kakaobase.snsapp.domain.follow.exception.FollowErrorCode;
 import com.kakaobase.snsapp.domain.follow.exception.FollowException;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -26,10 +29,9 @@ public class FollowService {
     private final MemberRepository memberRepository;
     private final EntityManager entityManager;
 
+
     @Transactional
     public void addFollowing(Long targetUserId, CustomUserDetails userDetails) {
-
-
 
         //팔로잉 신청한 사람
         Member followerUser = memberRepository.findById(Long.valueOf(userDetails.getId()))
@@ -67,5 +69,14 @@ public class FollowService {
         followingUser.decrementFollowerCount();
 
         followRepository.delete(follow);
+    }
+
+
+    public List<FollowResponse.UserInfo> getFollowers(Long userId, Integer limit, Long cursor) {
+        if(!memberRepository.existsById(userId)){
+            throw new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "userId");
+        }
+
+        return followConverter.toUserInfoList(followRepository.findFollowersByFollowingUserWithCursor(userId, limit, cursor));
     }
 }
