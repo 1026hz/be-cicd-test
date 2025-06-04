@@ -1,8 +1,6 @@
 package com.kakaobase.snsapp.domain.auth.principal;
 
-import com.kakaobase.snsapp.domain.members.entity.Member;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,6 +19,8 @@ public class CustomUserDetails implements UserDetails {
 
     private transient String email;
     private transient String password;
+    private transient String nickname;
+    private transient String profileImgUrl;
     private final String id;
     private final String role;
     private final String className;
@@ -37,12 +37,14 @@ public class CustomUserDetails implements UserDetails {
     }
 
     //로그인 시 사용
-    public CustomUserDetails(String email, String password, String id, String role, String className, boolean isEnabled) {
+    public CustomUserDetails(String email, String password, String id, String role, String className, String nickname, String  profileImgUrl, boolean isEnabled) {
         this.email = email;
         this.password = password;
+        this.nickname = nickname;
         this.id = id;
         this.role = role;
         this.className = className;
+        this.profileImgUrl = profileImgUrl;
         this.isEnabled = isEnabled;
     }
 

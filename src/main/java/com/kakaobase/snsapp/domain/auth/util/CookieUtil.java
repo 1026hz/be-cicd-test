@@ -2,7 +2,6 @@ package com.kakaobase.snsapp.domain.auth.util;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
@@ -29,20 +28,25 @@ public class CookieUtil {
     @Value("${app.jwt.secure}")
     private boolean secureCookie;
 
+    @Value("${app.jwt.refresh.domain}")
+    private String cookieDomain;
+
+    @Value("${app.jwt.refresh.same-site}")
+    private String cookieSameSite;
+
     /**
      * 리프레시 토큰을 담은 쿠키를 생성합니다.
      * 생성된 쿠키는 JavaScript에서 접근할 수 없도록 HttpOnly로 설정
      */
-    public void createRefreshTokenCookie(String refreshToken, HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from(refreshTokenCookieName, refreshToken)
+    public ResponseCookie createRefreshTokenCookie(String refreshToken) {
+        return ResponseCookie.from(refreshTokenCookieName, refreshToken)
                 .path(refreshTokenCookiePath)
+                .domain(cookieDomain)
                 .maxAge(refreshTokenExpiration / 1000)
                 .httpOnly(true)
                 .secure(secureCookie)
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .build();
-
-        response.addHeader("Set-Cookie", cookie.toString()); // 그대로 Set-Cookie 헤더로 추가
     }
 
 
@@ -71,12 +75,14 @@ public class CookieUtil {
      *
      * @return 만료된 쿠키
      */
-    public Cookie clearRefreshTokenCookie() {
-        Cookie cookie = new Cookie(refreshTokenCookieName, null);
-        cookie.setMaxAge(0);  // 즉시 만료
-        cookie.setPath(refreshTokenCookiePath);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(secureCookie);
-        return cookie;
+    public ResponseCookie createEmptyRefreshCookie() {
+        return ResponseCookie.from(refreshTokenCookieName, "")
+                .maxAge(0) // 즉시 만료
+                .path(refreshTokenCookiePath)
+                .httpOnly(true)
+                .secure(secureCookie)
+                .domain(cookieDomain)
+                .build();
+
     }
 }

@@ -95,26 +95,16 @@ public class SecurityTokenManager {
     public void revokeRefreshToken(String rawToken) {
         String hashedToken = hashToken(rawToken);
 
+        boolean exists = authTokenRepository.existsByRefreshTokenHash(hashedToken);
+        if (!exists) {
+            log.debug("리프레시 토큰 없음 - 무시하고 통과");
+            return;
+        }
+
         AuthToken tokenEntity = authTokenRepository.findByRefreshTokenHash(hashedToken)
-                .orElseThrow(() -> new AuthException(AuthErrorCode.REFRESH_TOKEN_INVALID));
+                .orElseThrow(() -> new AuthException(AuthErrorCode.REFRESH_TOKEN_INVALID, "해당 리프레시 토큰값을 DB에서 조회할 수 없음"));
 
         revokeToken(tokenEntity);
-    }
-
-
-    /**
-     * 현재 토큰을 제외한 모든 토큰 취소
-     */
-    @Transactional
-    public void revokeAllTokensExcept(Long memberId, String currentRawToken) {
-        String currentHashedToken = hashToken(currentRawToken);
-        List<AuthToken> tokens = authTokenRepository.findAllByMemberId(memberId);
-
-        for (AuthToken token : tokens) {
-            if (!token.getRefreshTokenHash().equals(currentHashedToken)) {
-                revokeToken(token);
-            }
-        }
     }
 
     /**
@@ -132,6 +122,23 @@ public class SecurityTokenManager {
         authTokenRepository.delete(token);
         revokedTokenRepository.save(revokedToken);
     }
+
+    /**
+     * 현재 토큰을 제외한 모든 토큰 취소
+     */
+    @Transactional
+    public void revokeAllTokensExcept(Long memberId, String currentRawToken) {
+        String currentHashedToken = hashToken(currentRawToken);
+        List<AuthToken> tokens = authTokenRepository.findAllByMemberId(memberId);
+
+        for (AuthToken token : tokens) {
+            if (!token.getRefreshTokenHash().equals(currentHashedToken)) {
+                revokeToken(token);
+            }
+        }
+    }
+
+
 
     /**
      * 토큰이 취소되었는지 확인

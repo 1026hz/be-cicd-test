@@ -48,7 +48,7 @@ public class PostController {
      */
     @GetMapping("/{postType}")
     @Operation(summary = "게시글 목록 조회", description = "게시판 유형별로 게시글 목록을 조회합니다.")
-    @PreAuthorize("@accessChecker.hasAccessToBoard(#postType, authentication.principal)")
+    @PreAuthorize("isAuthenticated() && @accessChecker.hasAccessToBoard(#postType, authentication.principal)")
     public ResponseEntity<PostResponseDto.PostListResponse> getPosts(
             @Parameter(description = "게시판 유형") @PathVariable String postType,
             @Parameter(description = "한 페이지에 표시할 게시글 수") @RequestParam(defaultValue = "12") int limit,
@@ -125,7 +125,7 @@ public class PostController {
      */
     @DeleteMapping("/{postType}/{postId}")
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
-    @PreAuthorize("@accessChecker.hasAccessToBoard(#postType, authentication.principal) and @accessChecker.isPostOwner(#postId, authentication.principal)")
+    @PreAuthorize("isAuthenticated() && @accessChecker.hasAccessToBoard(#postType, authentication.principal) and @accessChecker.isPostOwner(#postId, authentication.principal)")
     public ResponseEntity<PostResponseDto.PostDeleteResponse> deletePost(
             @Parameter(description = "게시판 유형") @PathVariable String postType,
             @Parameter(description = "게시글 ID") @PathVariable Long postId,

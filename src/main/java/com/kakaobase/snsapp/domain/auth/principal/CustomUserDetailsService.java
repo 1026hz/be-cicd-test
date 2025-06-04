@@ -48,6 +48,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 member.getId().toString(),
                 member.getRole(),
                 member.getClassName(),
+                member.getNickname(),
+                member.getProfileImgUrl(),
                 member.isEnabled()
         );
     }
@@ -79,6 +81,10 @@ public class CustomUserDetailsService implements UserDetailsService {
                 });
 
 
-        return new CustomUserDetails(member.getId().toString(), member.getRole(), member.getClassName(), member.isEnabled());
+        return new CustomUserDetails(
+                member.getId().toString(),
+                member.getRole(),
+                member.getClassName(),
+                member.isEnabled());
     }
 }
