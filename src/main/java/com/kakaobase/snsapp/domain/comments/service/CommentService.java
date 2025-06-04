@@ -188,22 +188,6 @@ public class CommentService {
      * @param pageRequest 페이지 요청 DTO
      * @return 댓글 목록 응답 DTO
      */
-    /**
-     * 게시글에 달린 댓글 목록을 조회합니다.
-     *
-     * @param memberId 현재 로그인한 회원 ID
-     * @param postId 조회할 게시글 ID
-     * @param pageRequest 페이지 요청 정보
-     * @return 댓글 목록 응답 DTO
-     */
-    /**
-     * 게시글에 달린 댓글 목록을 조회합니다.
-     *
-     * @param memberId 현재 로그인한 회원 ID
-     * @param postId 조회할 게시글 ID
-     * @param pageRequest 페이지 요청 정보
-     * @return 댓글 목록 응답 DTO
-     */
     public CommentResponseDto.CommentListResponse getCommentsByPostId(Long memberId, Long postId, CommentRequestDto.CommentPageRequest pageRequest) {
         // 게시글 존재 확인
         Post post = postService.findById(postId);
