@@ -11,6 +11,7 @@ import com.kakaobase.snsapp.domain.members.entity.Member;
 import com.kakaobase.snsapp.domain.members.repository.MemberRepository;
 import com.kakaobase.snsapp.global.error.code.GeneralErrorCode;
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class FollowService {
     private final MemberRepository memberRepository;
     private final EntityManager entityManager;
 
+    @Transactional
     public void addFollowing(Long targetUserId, CustomUserDetails userDetails) {
 
         if(!memberRepository.existsById(targetUserId)) {
@@ -48,7 +50,25 @@ public class FollowService {
         followRepository.save(follow);
     }
 
-    public void removeFollowing(){
+    @Transactional
+    public void removeFollowing(Long targetUserId, CustomUserDetails userDetails){
 
+        if(!memberRepository.existsById(targetUserId)) {
+            throw new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "targetUserId");
+        }
+
+        if(!memberRepository.existsById(Long.valueOf(userDetails.getId()))) {
+            throw new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "targetUserId");
+        }
+
+        //팔로잉 신청한 사람
+        Member followerProxy = entityManager.getReference(Member.class, Long.valueOf(userDetails.getId()));
+        //팔로잉 요청 받은 사람
+        Member followingProxy = entityManager.getReference(Member.class, targetUserId);
+
+        Follow follow = followRepository.findByFollowerUserAndFollowingUser(followerProxy, followingProxy)
+                .orElseThrow(()-> new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "targetUserId"));
+
+        followRepository.delete(follow);
     }
 }
