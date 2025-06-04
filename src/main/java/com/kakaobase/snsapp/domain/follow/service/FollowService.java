@@ -29,45 +29,42 @@ public class FollowService {
     @Transactional
     public void addFollowing(Long targetUserId, CustomUserDetails userDetails) {
 
-        if(!memberRepository.existsById(targetUserId)) {
-            throw new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "targetUserId");
-        }
 
-        if(!memberRepository.existsById(Long.valueOf(userDetails.getId()))) {
-            throw new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "targetUserId");
-        }
 
         //팔로잉 신청한 사람
-        Member followerProxy = entityManager.getReference(Member.class, Long.valueOf(userDetails.getId()));
-        //팔로잉 요청 받은 사람
-        Member followingProxy = entityManager.getReference(Member.class, targetUserId);
+        Member followerUser = memberRepository.findById(Long.valueOf(userDetails.getId()))
+                .orElseThrow(()-> new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "userId"));
 
-        if(followRepository.existsByFollowerUserAndFollowingUser(followerProxy, followingProxy)){
+        //팔로잉 요청 받은 사람
+        Member followingUser = memberRepository.findById(targetUserId)
+                .orElseThrow(()-> new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "targetUserId"));
+
+        if(followRepository.existsByFollowerUserAndFollowingUser(followerUser, followingUser)){
             throw new FollowException(FollowErrorCode.ALREADY_FOLLOWING);
         }
 
-        Follow follow = followConverter.toFollowEntity(followerProxy, followingProxy);
+        followerUser.incrementFollowingCount();
+        followingUser.incrementFollowerCount();
+
+        Follow follow = followConverter.toFollowEntity(followerUser, followingUser);
         followRepository.save(follow);
     }
 
     @Transactional
     public void removeFollowing(Long targetUserId, CustomUserDetails userDetails){
 
-        if(!memberRepository.existsById(targetUserId)) {
-            throw new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "targetUserId");
-        }
-
-        if(!memberRepository.existsById(Long.valueOf(userDetails.getId()))) {
-            throw new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "targetUserId");
-        }
-
         //팔로잉 신청한 사람
-        Member followerProxy = entityManager.getReference(Member.class, Long.valueOf(userDetails.getId()));
+        Member followerUser = memberRepository.findById(Long.valueOf(userDetails.getId()))
+                .orElseThrow(()-> new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "userId"));
         //팔로잉 요청 받은 사람
-        Member followingProxy = entityManager.getReference(Member.class, targetUserId);
-
-        Follow follow = followRepository.findByFollowerUserAndFollowingUser(followerProxy, followingProxy)
+        Member followingUser = memberRepository.findById(targetUserId)
                 .orElseThrow(()-> new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "targetUserId"));
+
+        Follow follow = followRepository.findByFollowerUserAndFollowingUser(followerUser, followingUser)
+                .orElseThrow(()-> new FollowException(FollowErrorCode.ALREADY_UNFOLLOWING));
+
+        followerUser.decrementFollowingCount();
+        followingUser.decrementFollowerCount();
 
         followRepository.delete(follow);
     }
