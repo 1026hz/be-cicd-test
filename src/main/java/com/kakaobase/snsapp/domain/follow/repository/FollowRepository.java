@@ -19,9 +19,9 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
     Optional<Follow> findByFollowerUserAndFollowingUser(Member followerUser, Member followingUser);
 
     @Query(value = """
-    SELECT m.id, m.nickname, m.name, m.profile_image
+    SELECT m.id, m.nickname, m.name, m.profile_img_url
     FROM follow f
-    JOIN member m ON f.follower_user_id = m.id
+    JOIN members m ON f.follower_user_id = m.id
     WHERE f.following_id = :followingId
       AND (:cursor IS NULL OR m.id > :cursor)
     ORDER BY m.id ASC
@@ -33,5 +33,21 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
             @Param("cursor") Long cursor
 
     );
+
+    @Query(value = """
+    SELECT m.id, m.nickname, m.name, m.profile_img_url
+    FROM follow f
+    JOIN members m ON f.following_id = m.id
+    WHERE f.follower_user_id = :followerId
+      AND (:cursor IS NULL OR m.id > :cursor)
+    ORDER BY m.id ASC
+    LIMIT :limit
+    """, nativeQuery = true)
+    List<Object[]> findFollowingsByFollowerUserWithCursor(
+            @Param("followerId") Long followerId,
+            @Param("limit") Integer limit,
+            @Param("cursor") Long cursor
+    );
+
 
 }
