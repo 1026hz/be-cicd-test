@@ -53,14 +53,6 @@ public class CommentService {
      * @param request 댓글 생성 요청 DTO
      * @return 생성된 댓글 응답 DTO
      */
-    /**
-     * 댓글을 생성합니다.
-     *
-     * @param memberId 회원 ID
-     * @param postId 게시글 ID
-     * @param request 댓글 생성 요청 DTO
-     * @return 생성된 댓글 응답 DTO
-     */
     @Transactional
     public CommentResponseDto.CreateCommentResponse createComment(Long memberId, Long postId, CommentRequestDto.CreateCommentRequest request) {
         // 게시글 존재 확인
