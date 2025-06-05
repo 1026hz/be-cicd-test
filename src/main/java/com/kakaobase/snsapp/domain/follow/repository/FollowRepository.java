@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface FollowRepository extends JpaRepository<Follow, Long> {
@@ -49,5 +50,7 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
             @Param("cursor") Long cursor
     );
 
+    @Query("SELECT f.followingUser.id FROM Follow f WHERE f.followerUser = :followerUser")
+    Set<Long> findFollowingUserIdsByFollowerUser(@Param("followerUser") Member followerUser);
 
 }
