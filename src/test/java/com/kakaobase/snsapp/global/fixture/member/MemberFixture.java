@@ -1,4 +1,4 @@
-package com.kakaobase.snsapp.global.fixture;
+package com.kakaobase.snsapp.global.fixture.member;
 
 import com.kakaobase.snsapp.domain.members.entity.Member;
 import static com.kakaobase.snsapp.global.constants.MemberFixtureConstants.*;
