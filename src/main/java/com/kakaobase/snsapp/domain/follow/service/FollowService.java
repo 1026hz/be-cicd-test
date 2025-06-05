@@ -33,8 +33,14 @@ public class FollowService {
     @Transactional
     public void addFollowing(Long targetUserId, CustomUserDetails userDetails) {
 
+        Long currentUserId = Long.valueOf(userDetails.getId());
+
+        if(targetUserId.equals(currentUserId)) {
+            throw new FollowException(GeneralErrorCode.INVALID_FORMAT, "스스로를 팔로잉 할 수 없습니다");
+        }
+
         //팔로잉 신청한 사람
-        Member followerUser = memberRepository.findById(Long.valueOf(userDetails.getId()))
+        Member followerUser = memberRepository.findById(currentUserId)
                 .orElseThrow(()-> new FollowException(GeneralErrorCode.RESOURCE_NOT_FOUND, "userId"));
 
         //팔로잉 요청 받은 사람
