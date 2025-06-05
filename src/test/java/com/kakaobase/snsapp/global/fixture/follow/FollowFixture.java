@@ -4,6 +4,10 @@ import com.kakaobase.snsapp.domain.follow.entity.Follow;
 import com.kakaobase.snsapp.domain.members.entity.Member;
 import com.kakaobase.snsapp.global.fixture.member.MemberFixture;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static com.kakaobase.snsapp.global.constants.MemberFixtureConstants.*;
 
 public class FollowFixture {
@@ -210,5 +214,46 @@ public class FollowFixture {
             this.following = following;
             this.follow = follow;
         }
+    }
+
+    /**
+     * 한 명이 여러 명을 팔로우하는 관계 생성
+     * @param follower 팔로우하는 사용자 (1명)
+     * @param followings 팔로우받는 사용자들 (여러명)
+     * @return Follow 리스트
+     */
+    public static List<Follow> createFollowsOneToMany(Member follower, List<Member> followings) {
+        return followings.stream()
+                .map(following -> createFollow(follower, following))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 여러 명이 한 명을 팔로우하는 관계 생성
+     * @param followers 팔로우하는 사용자들 (여러명)
+     * @param following 팔로우받는 사용자 (1명)
+     * @return Follow 리스트
+     */
+    public static List<Follow> createFollowsManyToOne(List<Member> followers, Member following) {
+        return followers.stream()
+                .map(follower -> createFollow(follower, following))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 완전 연결 - 모든 사용자가 서로를 팔로우 (자기 자신 제외)
+     * @param members 사용자 목록
+     * @return Follow 리스트
+     */
+    public static List<Follow> createFullyConnectedFollows(List<Member> members) {
+        List<Follow> follows = new ArrayList<>();
+        for (Member follower : members) {
+            for (Member following : members) {
+                if (!follower.equals(following)) {  // 자기 자신은 팔로우하지 않음
+                    follows.add(createFollow(follower, following));
+                }
+            }
+        }
+        return follows;
     }
 }
