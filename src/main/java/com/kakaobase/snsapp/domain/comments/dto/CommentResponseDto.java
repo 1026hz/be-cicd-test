@@ -1,6 +1,7 @@
 package com.kakaobase.snsapp.domain.comments.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.kakaobase.snsapp.domain.members.dto.MemberResponseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -15,30 +16,6 @@ import java.util.List;
 @Schema(description = "댓글 관련 응답 DTO 클래스")
 public class CommentResponseDto {
 
-    /**
-     * 댓글 작성자 정보 DTO
-     */
-    @Schema(description = "댓글 작성자 정보")
-    public record UserInfo(
-            @Schema(description = "회원 ID", example = "10")
-            Long id,
-
-            @Schema(description = "회원 닉네임", example = "댓글러")
-            String nickname,
-
-            @Schema(description = "회원 프로필 이미지 URL", example = "https://cdn.service.com/img1.jpg", nullable = true)
-            @JsonProperty("image_url")
-            String imageUrl,
-
-            @Schema(description = "팔로우 여부 (V2에서 구현)", example = "false")
-            @JsonProperty("is_followed")
-            boolean isFollowed
-    ) {
-        // 팔로우 정보 없이 생성하는 생성자 추가 (V2 전까지 임시로 사용)
-        public UserInfo(Long id, String nickname, String profile_image) {
-            this(id, nickname, profile_image, false);  // 팔로우 여부는 항상 false로 설정
-        }
-    }
 
     /**
      * 대댓글 정보 DTO
@@ -49,7 +26,7 @@ public class CommentResponseDto {
             Long id,
 
             @Schema(description = "작성자 정보")
-            UserInfo user,
+            MemberResponseDto.UserInfoWithFollowing user,
 
             @Schema(description = "대댓글 내용", example = "저도 그렇게 생각해요!")
             String content,
@@ -76,7 +53,7 @@ public class CommentResponseDto {
             Long id,
 
             @Schema(description = "작성자 정보")
-            UserInfo user,
+            MemberResponseDto.UserInfoWithFollowing user,
 
             @Schema(description = "댓글 내용", example = "이 게시글 정말 유익하네요!")
             String content,
@@ -106,7 +83,7 @@ public class CommentResponseDto {
             Long id,
 
             @Schema(description = "작성자 정보")
-            UserInfo user,
+            MemberResponseDto.UserInfo user,
 
             @Schema(description = "댓글 내용", example = "이 댓글은 정말 유익하네요!")
             String content,
