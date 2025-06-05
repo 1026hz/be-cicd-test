@@ -122,29 +122,6 @@ public class CommentResponseDto {
             Long next_cursor
     ) {}
 
-    /**
-     * 댓글 좋아요 토글 응답 DTO
-     */
-    @Schema(description = "댓글 좋아요 토글 응답")
-    public record CommentLikeResponse(
-            @Schema(description = "좋아요 상태 (true: 좋아요 등록, false: 좋아요 취소)", example = "true")
-            boolean liked,
-
-            @Schema(description = "좋아요 수", example = "4")
-            int like_count
-    ) {}
-
-    /**
-     * 대댓글 좋아요 토글 응답 DTO
-     */
-    @Schema(description = "대댓글 좋아요 토글 응답")
-    public record RecommentLikeResponse(
-            @Schema(description = "좋아요 상태 (true: 좋아요 등록, false: 좋아요 취소)", example = "true")
-            boolean liked,
-
-            @Schema(description = "좋아요 수", example = "2")
-            int like_count
-    ) {}
 
     /**
      * 댓글 상세 조회 응답 DTO
