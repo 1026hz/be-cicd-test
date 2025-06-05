@@ -18,10 +18,12 @@ public class Follow extends BaseCreatedTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    //팔로잉 요청건 사람
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "follower_user_id", nullable = false)
     private Member followerUser;
 
+    //팔로잉 요청 받은 사람
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "following_id", nullable = false)
     private Member followingUser;
