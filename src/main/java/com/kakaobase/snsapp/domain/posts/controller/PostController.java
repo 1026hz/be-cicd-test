@@ -1,6 +1,7 @@
 package com.kakaobase.snsapp.domain.posts.controller;
 
 import com.kakaobase.snsapp.domain.auth.principal.CustomUserDetails;
+import com.kakaobase.snsapp.domain.members.dto.MemberResponseDto;
 import com.kakaobase.snsapp.domain.posts.converter.PostConverter;
 import com.kakaobase.snsapp.domain.posts.dto.PostRequestDto;
 import com.kakaobase.snsapp.domain.posts.dto.PostResponseDto;
@@ -190,20 +191,14 @@ public class PostController {
      */
     @GetMapping("/{postId}/likes")
     @Operation(summary = "게시글 좋아요 취소", description = "게시글 좋아요를 취소합니다.")
-    public ResponseEntity<PostResponseDto.PostLikeResponse> getLikedMemberList(
+    public CustomResponse<List<MemberResponseDto.UserInfo>> getLikedMemberList(
             @Parameter(description = "게시글 ID") @PathVariable Long postId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        Long memberId = Long.valueOf(userDetails.getId());
+        List<MemberResponseDto.UserInfo> response= postLikeService.getLikedMembers(postId);
 
-        // 좋아요 취소
-        postLikeService.removeLike(postId, memberId);
-
-        // 응답 생성
-        PostResponseDto.PostLikeResponse response = PostConverter.toPostLikeResponse(false);
-
-        return ResponseEntity.ok(response);
+        return CustomResponse.success("좋아요 유저 목록을 성공적으로 불러왔습니다", response);
     }
 
 
