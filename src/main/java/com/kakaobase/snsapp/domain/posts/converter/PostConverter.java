@@ -1,18 +1,23 @@
 package com.kakaobase.snsapp.domain.posts.converter;
 
+import com.kakaobase.snsapp.domain.members.dto.MemberResponseDto;
+import com.kakaobase.snsapp.domain.members.entity.Member;
 import com.kakaobase.snsapp.domain.posts.dto.PostRequestDto;
 import com.kakaobase.snsapp.domain.posts.dto.PostResponseDto;
 import com.kakaobase.snsapp.domain.posts.entity.Post;
 import com.kakaobase.snsapp.domain.posts.entity.PostImage;
 import com.kakaobase.snsapp.domain.posts.exception.PostException;
 import com.kakaobase.snsapp.global.error.code.GeneralErrorCode;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Post 도메인의 Entity와 DTO 간 변환을 담당하는 Converter 클래스
  */
+@Component
 public class PostConverter {
 
     /**
@@ -254,6 +259,35 @@ public class PostConverter {
         } catch (IllegalArgumentException e) {
             throw new PostException(GeneralErrorCode.INVALID_QUERY_PARAMETER, "postType");
         }
+    }
+
+    /**
+     * Member Entity 리스트를 UserInfo DTO 리스트로 변환합니다.
+     *
+     * @param members Member Entity 리스트
+     * @return UserInfo DTO 리스트
+     */
+    public List<MemberResponseDto.UserInfo> convertToUserInfoList(List<Member> members) {
+        if (members == null) {
+            return List.of();
+        }
+
+        return members.stream()
+                .map(this::convertToUserInfo)
+                .collect(Collectors.toList());
+    }
+
+    public MemberResponseDto.UserInfo convertToUserInfo(Member member) {
+        if (member == null) {
+            return null;
+        }
+
+        return MemberResponseDto.UserInfo.builder()
+                .id(member.getId())
+                .name(member.getName())
+                .nickname(member.getNickname())
+                .imageUrl(member.getProfileImgUrl())
+                .build();
     }
 
     /**
