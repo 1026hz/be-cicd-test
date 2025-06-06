@@ -48,7 +48,7 @@ public class PostController {
      */
     @GetMapping("/{postType}")
     @Operation(summary = "게시글 목록 조회", description = "게시판 유형별로 게시글 목록을 조회합니다.")
-    @PreAuthorize("isAuthenticated() && @accessChecker.hasAccessToBoard(#postType, authentication.principal)")
+    @PreAuthorize("@accessChecker.hasAccessToBoard(#postType, authentication.principal)")
     public ResponseEntity<PostResponseDto.PostListResponse> getPosts(
             @Parameter(description = "게시판 유형") @PathVariable String postType,
             @Parameter(description = "한 페이지에 표시할 게시글 수") @RequestParam(defaultValue = "12") int limit,
@@ -65,7 +65,7 @@ public class PostController {
 
     @GetMapping("/{postType}/{postId}")
     @Operation(summary = "게시글 상세 조회", description = "게시글의 상세 정보를 조회합니다.")
-    @PreAuthorize("isAuthenticated() && @accessChecker.hasAccessToBoard(#postType, authentication.principal)")
+    @PreAuthorize("@accessChecker.hasAccessToBoard(#postType, authentication.principal)")
     public ResponseEntity<PostResponseDto.PostDetailResponse> getPostDetail(
             @Parameter(description = "게시판 유형") @PathVariable String postType,
             @Parameter(description = "게시글 ID") @PathVariable Long postId,
@@ -83,7 +83,7 @@ public class PostController {
      */
     @PostMapping("/{postType}")
     @Operation(summary = "게시글 생성", description = "새 게시글을 생성합니다.")
-    @PreAuthorize("isAuthenticated() && @accessChecker.hasAccessToBoard(#postType, authentication.principal)")
+    @PreAuthorize("@accessChecker.hasAccessToBoard(#postType, authentication.principal)")
     public ResponseEntity<PostResponseDto.PostCreateResponse> createPost(
             @Parameter(description = "게시판 유형") @PathVariable String postType,
             @Valid @RequestBody PostRequestDto.PostCreateRequestDto requestDto,
@@ -125,7 +125,7 @@ public class PostController {
      */
     @DeleteMapping("/{postType}/{postId}")
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
-    @PreAuthorize("isAuthenticated() && @accessChecker.hasAccessToBoard(#postType, authentication.principal) and @accessChecker.isPostOwner(#postId, authentication.principal)")
+    @PreAuthorize("@accessChecker.hasAccessToBoard(#postType, authentication.principal) and @accessChecker.isPostOwner(#postId, authentication.principal)")
     public ResponseEntity<PostResponseDto.PostDeleteResponse> deletePost(
             @Parameter(description = "게시판 유형") @PathVariable String postType,
             @Parameter(description = "게시글 ID") @PathVariable Long postId,
@@ -148,7 +148,6 @@ public class PostController {
      */
     @PostMapping("/{postId}/likes")
     @Operation(summary = "게시글 좋아요 추가", description = "게시글에 좋아요를 추가합니다.")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostResponseDto.PostLikeResponse> addLike(
             @Parameter(description = "게시글 ID") @PathVariable Long postId,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -170,7 +169,6 @@ public class PostController {
      */
     @DeleteMapping("/{postId}/likes")
     @Operation(summary = "게시글 좋아요 취소", description = "게시글 좋아요를 취소합니다.")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostResponseDto.PostLikeResponse> removeLike(
             @Parameter(description = "게시글 ID") @PathVariable Long postId,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -186,6 +184,29 @@ public class PostController {
 
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * 게시글에 좋아요를 누른 회원 목록 조회
+     */
+    @GetMapping("/{postId}/likes")
+    @Operation(summary = "게시글 좋아요 취소", description = "게시글 좋아요를 취소합니다.")
+    public ResponseEntity<PostResponseDto.PostLikeResponse> getLikedMemberList(
+            @Parameter(description = "게시글 ID") @PathVariable Long postId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        Long memberId = Long.valueOf(userDetails.getId());
+
+        // 좋아요 취소
+        postLikeService.removeLike(postId, memberId);
+
+        // 응답 생성
+        PostResponseDto.PostLikeResponse response = PostConverter.toPostLikeResponse(false);
+
+        return ResponseEntity.ok(response);
+    }
+
+
 
     /**
      * YouTube 영상 요약 요청 API
