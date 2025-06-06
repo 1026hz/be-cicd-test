@@ -1,5 +1,6 @@
 package com.kakaobase.snsapp.domain.posts.service;
 
+import com.kakaobase.snsapp.domain.members.converter.MemberConverter;
 import com.kakaobase.snsapp.domain.members.dto.MemberResponseDto;
 import com.kakaobase.snsapp.domain.members.entity.Member;
 import com.kakaobase.snsapp.domain.members.service.MemberService;
@@ -33,8 +34,8 @@ public class PostLikeService {
 
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
-    private final PostConverter postConverter;
     private final EntityManager em;
+    private final MemberConverter memberConverter;
 
     /**
      * 게시글에 좋아요를 추가합니다.
@@ -138,7 +139,7 @@ public class PostLikeService {
 
         List<Member> members = postLikeRepository.findMembersByPostIdWithCursor(postId, cursor, limit);
 
-        List<MemberResponseDto.UserInfo> result = postConverter.convertToUserInfoList(members);
+        List<MemberResponseDto.UserInfo> result = memberConverter.convertToUserInfoList(members);
 
         return result;
     }

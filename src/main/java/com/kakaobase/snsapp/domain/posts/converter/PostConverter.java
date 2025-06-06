@@ -262,35 +262,6 @@ public class PostConverter {
     }
 
     /**
-     * Member Entity 리스트를 UserInfo DTO 리스트로 변환합니다.
-     *
-     * @param members Member Entity 리스트
-     * @return UserInfo DTO 리스트
-     */
-    public List<MemberResponseDto.UserInfo> convertToUserInfoList(List<Member> members) {
-        if (members == null) {
-            return List.of();
-        }
-
-        return members.stream()
-                .map(this::convertToUserInfo)
-                .collect(Collectors.toList());
-    }
-
-    public MemberResponseDto.UserInfo convertToUserInfo(Member member) {
-        if (member == null) {
-            return null;
-        }
-
-        return MemberResponseDto.UserInfo.builder()
-                .id(member.getId())
-                .name(member.getName())
-                .nickname(member.getNickname())
-                .imageUrl(member.getProfileImgUrl())
-                .build();
-    }
-
-    /**
      * BoardType enum을 문자열 형태의 postType으로 변환합니다.
      *
      * @param boardType BoardType enum 값
