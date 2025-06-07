@@ -58,7 +58,7 @@ public class MemberController {
     @GetMapping("/{userId}")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public CustomResponse<MemberResponseDto.Mypage> getUserMyPage(
-            @Parameter(description = "프로필 이미지 수정 요청", required = true)
+            @Parameter(description = "조회할 유저의 id", required = true)
             @PathVariable Long userId
     ) {
         MemberResponseDto.Mypage response = memberService.getMypageInfo(userId);
