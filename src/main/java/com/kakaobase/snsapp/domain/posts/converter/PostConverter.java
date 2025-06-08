@@ -67,7 +67,7 @@ public class PostConverter {
                 .build();
     }
 
-    private List<PostResponseDto.PostDetails> convertToPostListItems(List<Post> posts, Long currentMemberId) {
+    public List<PostResponseDto.PostDetails> convertToPostListItems(List<Post> posts, Long currentMemberId) {
         if (posts.isEmpty()) {
             return Collections.emptyList();
         }
@@ -114,7 +114,7 @@ public class PostConverter {
     }
 
     public PostResponseDto.PostDetails convertToPostDetail(Post post, Long currentMemberId,
-                                                            Map<Long, String> imageMap,
+                                                            String imageUrl,
                                                             Boolean isLiked,
                                                             Boolean isFollowed) {
         Member member = post.getMember();
@@ -123,7 +123,7 @@ public class PostConverter {
                 post.getId(),
                 convertToUserInfo(member, currentMemberId, isFollowed),
                 post.getContent(),
-                imageMap.get(post.getId()), // 첫 번째 이미지 URL
+                imageUrl, // 첫 번째 이미지 URL
                 post.getYoutubeUrl(),
                 post.getYoutubeSummary(),
                 post.getCreatedAt(),
