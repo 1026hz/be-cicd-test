@@ -35,21 +35,22 @@ public class BotRecommentService {
 
     @Transactional
     public BotRecommentResponseDto handle(Post post, Comment comment) {
-        // [1] 소셜봇 계정
+        log.info("👉 [BotHandle] 트리거 시작 - postId={}, commentId={}", post.getId(), comment.getId());
+
         Member bot = memberRepository.findFirstByRole(Member.Role.BOT)
                 .orElseThrow(() -> new IllegalStateException("소셜봇 계정이 없습니다."));
+        log.debug("🔍 [BotHandle] 소셜봇: {}", bot.getNickname());
 
-        // [2] 작성자 조회
         Member writer = memberRepository.findById(post.getMemberId())
                 .orElseThrow(() -> new IllegalStateException("작성자 조회 실패"));
+        log.debug("🔍 [BotHandle] 게시글 작성자: {}", writer.getNickname());
 
-        // [3] 대댓글 리스트 조회
         List<Recomment> recomments = recommentRepository.findByCommentId(comment.getId());
+        log.debug("📄 [BotHandle] 기존 대댓글 수: {}", recomments.size());
 
-        // [4] 요청 DTO 생성
         BotRecommentRequestDto requestDto = BotRecommentConverter.toRequestDto(post, writer, comment, recomments);
+        log.debug("📤 [BotHandle] AI 요청 DTO: {}", requestDto);
 
-        // [5] FastAPI 호출
         String generatedContent = webClient.post()
                 .uri(aiServerUrl + "/recomments/bot")
                 .bodyValue(requestDto)
@@ -57,28 +58,31 @@ public class BotRecommentService {
                 .bodyToMono(String.class)
                 .block();
 
-        // [6] 대댓글 저장
+        log.info("📩 [BotHandle] AI 응답: {}", generatedContent);
+
         Recomment newRecomment = Recomment.builder()
                 .comment(comment)
                 .member(bot)
                 .content(generatedContent)
                 .build();
         recommentRepository.save(newRecomment);
+        log.info("✅ [BotHandle] 대댓글 저장 완료 - recommentId={}", newRecomment.getId());
 
-        // [7] 댓글의 대댓글 수 증가
         comment.increaseRecommentCount();
+        log.debug("🔼 [BotHandle] 댓글 대댓글 수 증가 완료");
 
-        // [8] 응답 반환
         return BotRecommentConverter.toResponseDto(post, comment, bot, generatedContent);
     }
 
     @Async
     public void triggerAsync(Post post, Comment comment) {
         try {
+            log.info("🚀 [BotTrigger] 비동기 트리거 시작 - postId={}, commentId={}", post.getId(), comment.getId());
             handle(post, comment);
-            log.info("✅ 소셜봇 대댓글 트리거 완료 - postId: {}, commentId: {}", post.getId(), comment.getId());
+            log.info("✅ [BotTrigger] 성공적으로 처리됨");
         } catch (Exception e) {
-            log.warn("⚠️ 소셜봇 대댓글 트리거 실패 - postId: {}, commentId: {}, reason: {}", post.getId(), comment.getId(), e.getMessage());
+            log.error("❌ [BotTrigger] 실패 - reason: {}", e.getMessage(), e);
         }
     }
+
 }

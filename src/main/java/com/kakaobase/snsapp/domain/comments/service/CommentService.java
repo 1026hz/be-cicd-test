@@ -119,6 +119,7 @@ public class CommentService {
                 .orElseThrow(() -> new CommentException(GeneralErrorCode.RESOURCE_NOT_FOUND, "postWriter", "게시글 작성자를 찾을 수 없습니다."));
 
         if (Member.Role.BOT.equals(postWriter.getRole())) {
+            log.info("🤖 [CommentService] 게시글 작성자가 소셜봇 - 대댓글 트리거 호출");
             botRecommentService.triggerAsync(post, savedComment);
         }
 
