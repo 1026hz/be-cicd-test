@@ -94,10 +94,10 @@ public class MemberController {
     }
 
     @GetMapping("/{userId}/comments")
-    @Operation(summary = "유저가 작성한 게시글 목록 조회", description = "유저가 작성한 게시글 목록을 조회합니다.")
+    @Operation(summary = "유저가 작성한 댓글 목록 조회", description = "유저가 작성한 댓글 목록을 조회합니다.")
     public CustomResponse<List<CommentResponseDto.CommentInfo>> getUserComments(
-            @Parameter(description = "한 페이지에 표시할 게시글 수") @RequestParam(defaultValue = "12") int limit,
-            @Parameter(description = "마지막으로 조회한 게시글 ID") @RequestParam(required = false) Long cursor,
+            @Parameter(description = "한 페이지에 표시할 댓글 수") @RequestParam(defaultValue = "12") int limit,
+            @Parameter(description = "마지막으로 조회한 댓글 ID") @RequestParam(required = false) Long cursor,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
@@ -105,7 +105,22 @@ public class MemberController {
 
         List<CommentResponseDto.CommentInfo> response = commentService.getUserCommentList(limit, cursor, memberId);
 
-        return CustomResponse.success("유저 게시글이조회에 성공하였습니다",response);
+        return CustomResponse.success("유저 댓글 조회에 성공하였습니다",response);
+    }
+
+    @GetMapping("/{userId}/liked-posts")
+    @Operation(summary = "유저가 좋아요한 게시글 목록 조회", description = "유저가 좋아요한 게시글 목록을 조회합니다.")
+    public CustomResponse<List<PostResponseDto.PostDetails>> getLikedPosts(
+            @Parameter(description = "한 페이지에 표시할 게시글 수") @RequestParam(defaultValue = "12") int limit,
+            @Parameter(description = "마지막으로 조회한 게시글 ID") @RequestParam(required = false) Long cursor,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        Long memberId = Long.valueOf(userDetails.getId());
+
+        List<PostResponseDto.PostDetails> response = postService.getLikedPostList(limit, cursor, memberId);
+
+        return CustomResponse.success("좋아요한 게시글 목록이 정상적으로 조회되었습니다",response);
     }
 
     @Operation(summary = "비밀번호 수정", description = "회원의 비밀번호를 수정합니다")
