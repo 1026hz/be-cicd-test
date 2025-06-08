@@ -20,6 +20,8 @@ import jakarta.persistence.EntityManager;
 import org.springframework.context.ApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -48,6 +50,7 @@ public class PostService {
     private final PostLikeService postLikeService;
     private final FollowRepository followRepository;
     private final EntityManager em;
+    private final PostConverter postConverter;
 
     /**
      * 게시글을 생성합니다.
@@ -58,7 +61,7 @@ public class PostService {
      * @return 생성된 게시글 엔티티
      */
     @Transactional
-    public Post createPost(Post.BoardType boardType, PostRequestDto.PostCreateRequestDto requestDto, Long memberId) {
+    public PostResponseDto.PostDetails createPost(Post.BoardType boardType, PostRequestDto.PostCreateRequestDto requestDto, Long memberId) {
         // 이미지 URL 유효성 검증
         if (StringUtils.hasText(requestDto.image_url()) && !s3Service.isValidImageUrl(requestDto.image_url())) {
             throw new PostException(PostErrorCode.INVALID_IMAGE_URL);
@@ -71,7 +74,7 @@ public class PostService {
         Post post = PostConverter.toPost(requestDto, proxyMember, boardType);
 
         // 게시글 저장
-        Post savedPost = postRepository.save(post);
+        postRepository.save(post);
 
         if (StringUtils.hasText(requestDto.image_url())) {
             PostImage postImage = PostConverter.toPostImage(post, 0, requestDto.image_url());
@@ -80,7 +83,7 @@ public class PostService {
 
         // 트랜잭션 커밋 후 비동기 요약 실행 예약
         if (StringUtils.hasText(youtubeUrl)) {
-            final Long postId = savedPost.getId();  // final로 캡처
+            final Long postId = post.getId();  // final로 캡처
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
@@ -91,10 +94,9 @@ public class PostService {
         }
 
         // 게시글 생성 이벤트 발행
-        applicationEventPublisher.publishEvent(new PostCreatedEvent(savedPost.getId(), boardType, memberId));
+        applicationEventPublisher.publishEvent(new PostCreatedEvent(post.getId(), boardType, memberId));
 
-        log.info("게시글 생성 완료: 게시글 ID={}, 작성자 ID={}, 게시판={}", savedPost.getId(), memberId, boardType);
-        return savedPost;
+        return postConverter.convertToPostDetail(post, memberId, requestDto.image_url(), false, false);
     }
 
     /**
@@ -104,12 +106,9 @@ public class PostService {
      * @param memberId 현재 사용자 ID
      * @return 게시글 상세 정보
      */
-    public PostResponseDto.PostDetailResponse getPostDetail(Long postId, Long memberId) {
+    public PostResponseDto.PostDetails getPostDetail(Long postId, Long memberId) {
         // 게시글 조회
         Post post = findById(postId);
-
-        // 작성자 정보 조회
-        Map<String, String> userInfo = getMemberInfo(post.getMember().getId());
 
         // 본인 게시글 여부 확인
         boolean isMine = memberId != null && memberId.equals(post.getMember().getId());
@@ -120,15 +119,17 @@ public class PostService {
         Member follower = em.getReference(Member.class, memberId);
         Member following = em.getReference(Member.class, post.getMember().getId());
 
-        // 팔로우 여부는 현재 비활성화 되어있으므로 false로 설정
         boolean isFollowing = followRepository.existsByFollowerUserAndFollowingUser(follower, following);
 
         // 이미지 조회
+        String postImage = null;
         List<PostImage> postImages = postImageRepository.findByPostIdOrderBySortIndexAsc(post.getId());
+        if(!postImages.get(0).getImgUrl().isBlank()){
+            postImage = postImages.get(0).getImgUrl();
+        }
 
         // 응답 DTO 생성 및 반환
-        return PostConverter.toPostDetailResponse(
-                post, userInfo, postImages, isMine, isLiked, isFollowing);
+        return postConverter.convertToPostDetail(post, memberId, postImage, isLiked, isFollowing);
     }
 
     /**
@@ -171,85 +172,22 @@ public class PostService {
     /**
      * 게시글 목록을 조회합니다.
      */
-    public PostResponseDto.PostListResponse getPostList(String postType, int limit, Long cursor, Long currentMemberId) {
+    public List<PostResponseDto.PostDetails> getPostList(String postType, int limit, Long cursor, Long currentMemberId) {
         // 1. 유효성 검증
         if (limit < 1) {
             throw new PostException(GeneralErrorCode.INVALID_QUERY_PARAMETER, "limit", "limit는 1 이상이어야 합니다.");
         }
 
+        Post.BoardType boardType = PostConverter.toBoardType(postType);
+        Pageable pageable = PageRequest.of(0, limit);
+
         // 3. 게시글 조회
-        List<Post> posts = postRepository.findByBoardTypeWithCursor(postType, cursor, limit);
+        List<Post> posts = postRepository.findByBoardTypeWithCursor(boardType, cursor, pageable);
 
-        // 4. 작성자 정보 조회
-        Map<Long, Map<String, String>> memberInfoMap = getMemberInfoByPosts(posts);
+        // 3. PostListItem으로 변환
+        List<PostResponseDto.PostDetails> reponse = postConverter.convertToPostListItems(posts, currentMemberId);
 
-        // 5. 게시글의 첫 번째 이미지 URL 조회
-        Map<Long, String> firstImageUrlMap = findFirstImageUrlsByPosts(posts);
-
-        // 8. 좋아요 정보 조회
-        List<Long> likedPostIds = currentMemberId != null
-                ? postLikeService.findLikedPostIdsByMember(currentMemberId, posts)
-                : List.of();
-
-        // 9. PostListItem 변환 (createPostListItem 메서드 활용)
-        List<PostResponseDto.PostListItem> items = posts.stream()
-                .map(post -> createPostListItem(
-                        post,
-                        memberInfoMap,
-                        firstImageUrlMap.get(post.getId()),
-                        likedPostIds,
-                        currentMemberId
-                ))
-                .collect(Collectors.toList());
-
-        // 10. 최종 응답 DTO 생성
-        return PostConverter.toPostListResponse(items, "게시글을 불러오는데 성공하였습니다");
-    }
-
-    /**
-     * 개별 게시글을 PostListItem DTO로 변환합니다.
-     */
-    private PostResponseDto.PostListItem createPostListItem(
-            Post post,
-            Map<Long, Map<String, String>> memberInfoMap,
-            String firstImageUrl,
-            List<Long> likedPostIds,
-            Long currentMemberId) {
-
-
-        // 회원 정보 조회
-        Map<String, String> userInfo = memberInfoMap.get(post.getMember().getId());
-
-        Member follower = em.getReference(Member.class, currentMemberId);
-        Member following = em.getReference(Member.class, post.getMember().getId());
-        Boolean isFollowing = followRepository.existsByFollowerUserAndFollowingUser(follower, following);
-
-        // UserInfo DTO 생성
-        PostResponseDto.UserInfo user = new PostResponseDto.UserInfo(
-                post.getMember().getId(),
-                userInfo.get("nickname"),
-                userInfo.get("imageUrl"),
-                isFollowing
-
-        );
-
-        // 본인 게시글 여부 및 좋아요 여부 확인
-        boolean isMine = currentMemberId != null && currentMemberId.equals(post.getMember().getId());
-        boolean isLiked = likedPostIds.contains(post.getId());
-
-        return new PostResponseDto.PostListItem(
-                post.getId(),
-                user,
-                post.getContent(),
-                firstImageUrl,  // 변경: 미리 조회한 이미지 URL 사용
-                post.getYoutubeUrl(),
-                post.getYoutubeSummary(),
-                post.getCreatedAt(),
-                post.getLikeCount(),
-                post.getCommentCount(),
-                isMine,
-                isLiked
-        );
+        return reponse;
     }
 
     /**
@@ -262,51 +200,6 @@ public class PostService {
         return memberService.getMemberInfo(memberId);
     }
 
-    /**
-     * 게시글 목록에 포함된 회원 정보를 조회합니다.
-     *
-     * @param posts 게시글 목록
-     * @return 회원 ID를 키로 하고 회원 정보(닉네임, 프로필 이미지)를 값으로 하는 맵
-     */
-    public Map<Long, Map<String, String>> getMemberInfoByPosts(List<Post> posts) {
-        // 게시글에 포함된 회원 ID 목록 추출
-        List<Long> memberIds = posts.stream()
-                .map(Post::getMemberId)
-                .distinct()
-                .collect(Collectors.toList());
-
-        if (memberIds.isEmpty()) {
-            return Map.of();
-        }
-
-        // MemberService를 통해 회원 정보 조회
-        return memberService.getMemberInfoMapByIds(memberIds);
-    }
-    /**
-     * 게시글 목록의 첫 번째 이미지 URL을 조회합니다.
-     *
-     * @param posts 게시글 목록
-     * @return 게시글 ID를 키로, 첫 번째 이미지 URL을 값으로 하는 Map
-     */
-    public Map<Long, String> findFirstImageUrlsByPosts(List<Post> posts) {
-        if (posts.isEmpty()) {
-            return Map.of();
-        }
-
-        List<Long> postIds = posts.stream()
-                .map(Post::getId)
-                .collect(Collectors.toList());
-
-        // 각 게시글의 첫 번째 이미지만 조회 (sortIndex가 가장 작은 것)
-        List<PostImage> firstImages = postImageRepository.findFirstImagesByPostIds(postIds);
-
-        // postId를 키로, imgUrl을 값으로 하는 Map 생성
-        return firstImages.stream()
-                .collect(Collectors.toMap(
-                        postImage -> postImage.getPost().getId(),
-                        PostImage::getImgUrl
-                ));
-    }
 
 
     /**
