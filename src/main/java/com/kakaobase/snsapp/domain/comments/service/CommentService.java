@@ -51,6 +51,8 @@ public class CommentService {
     private final FollowRepository followRepository;
     private final EntityManager em;
 
+    private final BotRecommentService botRecommentService;
+
     /**
      * 댓글을 생성합니다.
      *
@@ -113,6 +115,15 @@ public class CommentService {
         eventPublisher.publishEvent(event);
 
         log.debug("댓글 생성 이벤트 발행: {}", event);
+
+        // 게시물 작성자가 소셜봇이면 소셜봇 대댓글 로직 구현하도록
+        if (post.getMemberId() == 1213) {
+            log.info("🤖 [Trigger] 소셜봇 게시글이므로 트리거 실행!");
+            botRecommentService.triggerAsync(post, savedComment);
+        } else {
+            log.info("🙅 [Skip] 게시글 작성자가 소셜봇이 아님 → 트리거 생략");
+        }
+
 
         return commentConverter.toCreateCommentResponse(savedComment);
     }
