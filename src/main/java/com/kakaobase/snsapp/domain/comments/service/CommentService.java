@@ -117,7 +117,7 @@ public class CommentService {
         log.debug("댓글 생성 이벤트 발행: {}", event);
 
         // 게시물 작성자가 소셜봇이면 소셜봇 대댓글 로직 구현하도록
-        if (post.getMemberId() == 1213) {
+        if (post.getMember().getId() == 1213) {
             log.info("🤖 [Trigger] 소셜봇 게시글이므로 트리거 실행!");
             botRecommentService.triggerAsync(post, savedComment);
         } else {
