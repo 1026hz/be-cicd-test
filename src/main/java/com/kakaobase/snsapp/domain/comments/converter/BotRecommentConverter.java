@@ -9,7 +9,6 @@ import com.kakaobase.snsapp.domain.posts.entity.Post;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class BotRecommentConverter {
@@ -57,22 +56,6 @@ public class BotRecommentConverter {
                 postDto,
                 commentDto
         );
-    }
-
-    public static BotRecommentResponseDto toResponseDto(
-            Post post, Comment comment, Member bot, String content
-    ) {
-        return BotRecommentResponseDto.builder()
-                .board_type(post.getBoardType().name())
-                .post_id(post.getId())
-                .comment_id(comment.getId())
-                .user(new BotRecommentResponseDto.BotUserDto(
-                        bot.getId(),
-                        bot.getNickname(),
-                        bot.getClassName().toString()
-                ))
-                .content(content)
-                .build();
     }
 
     private static String formatUtc(Instant instant) {

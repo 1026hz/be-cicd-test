@@ -1,8 +1,9 @@
 package com.kakaobase.snsapp.domain.comments.service;
 
 import com.kakaobase.snsapp.domain.comments.converter.BotRecommentConverter;
+import com.kakaobase.snsapp.domain.comments.converter.CommentConverter;
 import com.kakaobase.snsapp.domain.comments.dto.BotRecommentRequestDto;
-import com.kakaobase.snsapp.domain.comments.dto.BotRecommentResponseDto;
+import com.kakaobase.snsapp.domain.comments.dto.CommentResponseDto;
 import com.kakaobase.snsapp.domain.comments.entity.Comment;
 import com.kakaobase.snsapp.domain.comments.entity.Recomment;
 import com.kakaobase.snsapp.domain.comments.repository.RecommentRepository;
@@ -27,14 +28,14 @@ public class BotRecommentService {
 
     private final RecommentRepository recommentRepository;
     private final MemberRepository memberRepository;
-    private final PostRepository postRepository;
+    private final CommentConverter commentConverter;
     private final WebClient webClient;
 
     @Value("${ai.server.url}")
     private String aiServerUrl;
 
     @Transactional
-    public BotRecommentResponseDto handle(Post post, Comment comment) {
+    public CommentResponseDto.RecommentInfo handle(Post post, Comment comment) {
         log.info("👉 [BotHandle] 트리거 시작 - postId={}, commentId={}", post.getId(), comment.getId());
 
         Member bot = memberRepository.findFirstByRole(Member.Role.BOT)
@@ -71,7 +72,7 @@ public class BotRecommentService {
         comment.increaseRecommentCount();
         log.debug("🔼 [BotHandle] 댓글 대댓글 수 증가 완료");
 
-        return BotRecommentConverter.toResponseDto(post, comment, bot, generatedContent);
+        return commentConverter.toRecommentInfoForBot(newRecomment, bot);
     }
 
     @Async
