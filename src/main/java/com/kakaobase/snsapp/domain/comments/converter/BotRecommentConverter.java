@@ -7,13 +7,12 @@ import com.kakaobase.snsapp.domain.comments.entity.Recomment;
 import com.kakaobase.snsapp.domain.members.entity.Member;
 import com.kakaobase.snsapp.domain.posts.entity.Post;
 
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class BotRecommentConverter {
-
-    private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_INSTANT;
 
     public static BotRecommentRequestDto toRequestDto(
             Post post,
@@ -76,7 +75,17 @@ public class BotRecommentConverter {
                 .build();
     }
 
-    private static String formatUtc(java.time.Instant instant) {
-        return ISO_FORMATTER.format(instant); // ex: 2025-06-08T20:29:44.666858Z
+    private static String formatUtc(Instant instant) {
+        // 마이크로초까지만 출력하고 Z 붙이기
+        long seconds = instant.getEpochSecond();
+        int micros = instant.getNano() / 1000;  // 나노초를 마이크로초로 변환
+
+        // 포맷: yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'
+        return String.format("%s.%06dZ",
+                java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+                        .withZone(ZoneOffset.UTC)
+                        .format(instant),
+                micros
+        );
     }
 }
