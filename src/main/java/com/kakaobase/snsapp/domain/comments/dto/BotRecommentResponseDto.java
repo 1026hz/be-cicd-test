@@ -1,14 +1,17 @@
 package com.kakaobase.snsapp.domain.comments.dto;
 
-import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Builder
-public record BotRecommentResponseDto(
-        String board_type,
-        Long post_id,
-        Long comment_id,
-        BotUserDto user,
-        String content
-) {
-    public record BotUserDto(Long id, String nickname, String class_name) {}
+@Getter
+@NoArgsConstructor
+public class BotRecommentResponseDto {
+
+    private Data data;
+
+    @Getter
+    @NoArgsConstructor
+    public static class Data {
+        private String content;
+    }
 }

@@ -3,6 +3,7 @@ package com.kakaobase.snsapp.domain.comments.service;
 import com.kakaobase.snsapp.domain.comments.converter.BotRecommentConverter;
 import com.kakaobase.snsapp.domain.comments.converter.CommentConverter;
 import com.kakaobase.snsapp.domain.comments.dto.BotRecommentRequestDto;
+import com.kakaobase.snsapp.domain.comments.dto.BotRecommentResponseDto;
 import com.kakaobase.snsapp.domain.comments.dto.CommentResponseDto;
 import com.kakaobase.snsapp.domain.comments.entity.Comment;
 import com.kakaobase.snsapp.domain.comments.entity.Recomment;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -52,14 +54,15 @@ public class BotRecommentService {
         BotRecommentRequestDto requestDto = BotRecommentConverter.toRequestDto(post, writer, comment, recomments);
         log.debug("📤 [BotHandle] AI 요청 DTO: {}", requestDto);
 
-        String generatedContent = webClient.post()
+        BotRecommentResponseDto response = webClient.post()
                 .uri(aiServerUrl + "/recomments/bot")
                 .bodyValue(requestDto)
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(BotRecommentResponseDto.class)
                 .block();
 
-        log.info("📩 [BotHandle] AI 응답: {}", generatedContent);
+        String generatedContent = Objects.requireNonNull(response).getData().getContent();
+        log.info("📩 [BotHandle] AI 생성 대댓글: {}", generatedContent);
 
         Recomment newRecomment = Recomment.builder()
                 .comment(comment)
@@ -67,10 +70,8 @@ public class BotRecommentService {
                 .content(generatedContent)
                 .build();
         recommentRepository.save(newRecomment);
-        log.info("✅ [BotHandle] 대댓글 저장 완료 - recommentId={}", newRecomment.getId());
 
         comment.increaseRecommentCount();
-        log.debug("🔼 [BotHandle] 댓글 대댓글 수 증가 완료");
 
         return commentConverter.toRecommentInfoForBot(newRecomment, bot);
     }
