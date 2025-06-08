@@ -55,6 +55,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p " +
             "JOIN FETCH p.member " +  // JPA 연관관계 활용
             "WHERE p.boardType = :boardType " +
+            "AND p.deletedAt IS NULL " +
             "AND (:cursor IS NULL OR p.id < :cursor) " +
             "ORDER BY p.createdAt DESC, p.id DESC")
     List<Post> findByBoardTypeWithCursor(
@@ -69,6 +70,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p " +
             "JOIN FETCH p.member " +
             "WHERE p.member.id = :memberId " +
+            "AND p.deletedAt IS NULL " +
             "AND (:cursor IS NULL OR p.id < :cursor) " +
             "ORDER BY p.createdAt DESC, p.id DESC")
     List<Post> findByMemberIdWithCursor(
