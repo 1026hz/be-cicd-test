@@ -21,6 +21,8 @@ import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -279,6 +281,29 @@ public class CommentService {
         );
     }
 
+
+    //특정 유저의 댓글 조회
+    public List<CommentResponseDto.CommentInfo> getUserCommentList(int limit, Long cursor, Long memberId) {
+
+        Member currentUser = memberRepository.findById(memberId)
+                .orElseThrow(()->new CommentException(GeneralErrorCode.RESOURCE_NOT_FOUND, "userId"));
+
+
+        Pageable pageable = PageRequest.of(0, limit);
+
+        // 댓글 목록 조회
+        List<Comment> comments = commentRepository.findByMemberIdWithCursor(memberId, cursor, pageable); // 다음 페이지 확인을 위해 limit + 1개 조회
+
+
+        // 개별 댓글 정보를 가져와서 CommentInfo 리스트 생성
+        List<CommentResponseDto.CommentInfo> commentInfoList = comments.stream()
+                .map(comment -> getCommentInfo(memberId, comment.getId()))
+                .collect(Collectors.toList());
+
+        // CommentListResponse 생성하여 반환
+        return commentInfoList;
+    }
+
     public CommentResponseDto.CommentDetailResponse getCommentDetail(Long memberId, Long commentId) {
         CommentResponseDto.CommentInfo commentInfo = getCommentInfo(memberId, commentId);
         return new CommentResponseDto.CommentDetailResponse(commentInfo);
@@ -295,7 +320,7 @@ public class CommentService {
     public CommentResponseDto.CommentInfo getCommentInfo(Long memberId, Long commentId) {
         // 댓글 조회
         Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
-                .orElseThrow(() -> new CommentException(GeneralErrorCode.RESOURCE_NOT_FOUND, "commentId", "댓글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CommentException(GeneralErrorCode.RESOURCE_NOT_FOUND, "commentId"));
 
         // 댓글 좋아요 여부 확인
         boolean isLiked = commentLikeRepository.existsByMemberIdAndCommentId(memberId, commentId);
