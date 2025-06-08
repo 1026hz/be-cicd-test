@@ -103,7 +103,7 @@ public class CommentService {
         CommentCreatedEvent event = new CommentCreatedEvent(
                 savedComment.getId(),
                 postId,
-                post.getMemberId(),  // 게시글 작성자 ID
+                post.getMember().getId(),  // 게시글 작성자 ID
                 memberId,  // 댓글 작성자 ID
                 savedComment.getContent(),
                 savedComment.getCreatedAt()

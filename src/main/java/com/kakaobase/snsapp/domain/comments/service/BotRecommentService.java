@@ -73,7 +73,7 @@ public class BotRecommentService {
             Post post = comment.getPost();
 
             // 2. 게시글 작성자 정보 조회
-            BotRecommentRequestDto.UserInfo postAuthorInfo = memberService.getMemberBotInfo(post.getMemberId());
+            BotRecommentRequestDto.UserInfo postAuthorInfo = memberService.getMemberBotInfo(post.getMember().getId());
 
             // 3. 대댓글 목록 조회 (큰 limit 사용)
             CommentRequestDto.RecommentPageRequest pageRequest =
