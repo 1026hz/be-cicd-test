@@ -42,7 +42,7 @@ public class BotRecommentService {
         Member bot = memberRepository.findFirstByRole(Member.Role.BOT)
                 .orElseThrow(() -> new IllegalStateException("소셜봇 계정이 없습니다."));
 
-        Member writer = memberRepository.findById(post.getMemberId())
+        Member writer = memberRepository.findById(post.getMember().getId())
                 .orElseThrow(() -> new IllegalStateException("작성자 조회 실패"));
 
         List<Recomment> recomments = recommentRepository.findByCommentId(comment.getId());
