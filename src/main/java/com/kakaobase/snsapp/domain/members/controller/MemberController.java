@@ -1,6 +1,8 @@
 package com.kakaobase.snsapp.domain.members.controller;
 
 import com.kakaobase.snsapp.domain.auth.principal.CustomUserDetails;
+import com.kakaobase.snsapp.domain.comments.dto.CommentResponseDto;
+import com.kakaobase.snsapp.domain.comments.service.CommentService;
 import com.kakaobase.snsapp.domain.members.dto.MemberRequestDto;
 import com.kakaobase.snsapp.domain.members.dto.MemberResponseDto;
 import com.kakaobase.snsapp.domain.members.service.MemberService;
@@ -37,6 +39,7 @@ public class MemberController {
 
     private final MemberService memberService;
     private final PostService postService;
+    private final CommentService commentService;
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다")
     @ApiResponses(value = {
@@ -86,6 +89,21 @@ public class MemberController {
         Long memberId = Long.valueOf(userDetails.getId());
 
         List<PostResponseDto.PostDetails> response = postService.getUserPostList(limit, cursor, memberId);
+
+        return CustomResponse.success("유저 게시글이조회에 성공하였습니다",response);
+    }
+
+    @GetMapping("/{userId}/comments")
+    @Operation(summary = "유저가 작성한 게시글 목록 조회", description = "유저가 작성한 게시글 목록을 조회합니다.")
+    public CustomResponse<List<CommentResponseDto.CommentInfo>> getUserComments(
+            @Parameter(description = "한 페이지에 표시할 게시글 수") @RequestParam(defaultValue = "12") int limit,
+            @Parameter(description = "마지막으로 조회한 게시글 ID") @RequestParam(required = false) Long cursor,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        Long memberId = Long.valueOf(userDetails.getId());
+
+        List<CommentResponseDto.CommentInfo> response = commentService.getUserCommentList(limit, cursor, memberId);
 
         return CustomResponse.success("유저 게시글이조회에 성공하였습니다",response);
     }
