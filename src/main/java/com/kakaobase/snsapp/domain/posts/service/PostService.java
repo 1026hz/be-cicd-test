@@ -190,6 +190,9 @@ public class PostService {
         return reponse;
     }
 
+    /**
+     * 유저가 작성한 게시글 조회
+     */
     public List<PostResponseDto.PostDetails> getUserPostList(int limit, Long cursor, Long currentMemberId) {
         // 1. 유효성 검증
         if (limit < 1) {
@@ -208,6 +211,23 @@ public class PostService {
 
     }
 
+    public List<PostResponseDto.PostDetails> getLikedPostList(int limit, Long cursor, Long currentMemberId) {
+        // 1. 유효성 검증
+        if (limit < 1) {
+            throw new PostException(GeneralErrorCode.INVALID_QUERY_PARAMETER, "limit", "limit는 1 이상이어야 합니다.");
+        }
+
+        Pageable pageable = PageRequest.of(0, limit);
+
+        // 3. 게시글 조회
+        List<Post> posts = postRepository.findLikedPostsByMemberIdWithCursor(currentMemberId, cursor, pageable);
+
+        // 3. PostListItem으로 변환
+        List<PostResponseDto.PostDetails> reponse = postConverter.convertToPostListItems(posts, currentMemberId);
+
+        return reponse;
+    }
+
     /**
      * 회원 ID로 회원 정보를 조회합니다.
      *
@@ -217,7 +237,6 @@ public class PostService {
     public Map<String, String> getMemberInfo(Long memberId) {
         return memberService.getMemberInfo(memberId);
     }
-
 
 
     /**
