@@ -1,7 +1,6 @@
 package com.kakaobase.snsapp.domain.comments.converter;
 
 import com.kakaobase.snsapp.domain.comments.dto.BotRecommentRequestDto;
-import com.kakaobase.snsapp.domain.comments.dto.BotRecommentResponseDto;
 import com.kakaobase.snsapp.domain.comments.entity.Comment;
 import com.kakaobase.snsapp.domain.comments.entity.Recomment;
 import com.kakaobase.snsapp.domain.members.entity.Member;

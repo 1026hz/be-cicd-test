@@ -11,7 +11,6 @@ import com.kakaobase.snsapp.domain.comments.repository.RecommentRepository;
 import com.kakaobase.snsapp.domain.members.entity.Member;
 import com.kakaobase.snsapp.domain.members.repository.MemberRepository;
 import com.kakaobase.snsapp.domain.posts.entity.Post;
-import com.kakaobase.snsapp.domain.posts.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,17 +41,13 @@ public class BotRecommentService {
 
         Member bot = memberRepository.findFirstByRole(Member.Role.BOT)
                 .orElseThrow(() -> new IllegalStateException("소셜봇 계정이 없습니다."));
-        log.debug("🔍 [BotHandle] 소셜봇: {}", bot.getNickname());
 
         Member writer = memberRepository.findById(post.getMemberId())
                 .orElseThrow(() -> new IllegalStateException("작성자 조회 실패"));
-        log.debug("🔍 [BotHandle] 게시글 작성자: {}", writer.getNickname());
 
         List<Recomment> recomments = recommentRepository.findByCommentId(comment.getId());
-        log.debug("📄 [BotHandle] 기존 대댓글 수: {}", recomments.size());
 
         BotRecommentRequestDto requestDto = BotRecommentConverter.toRequestDto(post, writer, comment, recomments);
-        log.debug("📤 [BotHandle] AI 요청 DTO: {}", requestDto);
 
         BotRecommentResponseDto response = webClient.post()
                 .uri(aiServerUrl + "/recomments/bot")
