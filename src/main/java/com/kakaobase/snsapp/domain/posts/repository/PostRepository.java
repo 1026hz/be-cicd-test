@@ -66,17 +66,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * 특정 회원의 게시글을 cursor 기반으로 조회합니다.
      * 최신 게시글부터 내림차순으로 정렬되며, cursor보다 작은 id를 가진 게시글을 조회합니다.
      */
-    @Query(value = "SELECT p.* FROM posts p " +
-            "WHERE p.member_id = :memberId " +
-            "AND p.deleted_at IS NULL " +
+    @Query("SELECT p FROM Post p " +
+            "JOIN FETCH p.member " +
+            "WHERE p.member.id = :memberId " +
             "AND (:cursor IS NULL OR p.id < :cursor) " +
-            "ORDER BY p.created_at DESC, p.id DESC " +
-            "LIMIT :limit",
-            nativeQuery = true)
+            "ORDER BY p.createdAt DESC, p.id DESC")
     List<Post> findByMemberIdWithCursor(
             @Param("memberId") Long memberId,
             @Param("cursor") Long cursor,
-            @Param("limit") int limit);
-
-
+            Pageable pageable);
 }
