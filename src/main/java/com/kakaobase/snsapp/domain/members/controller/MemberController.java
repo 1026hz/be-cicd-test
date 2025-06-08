@@ -1,8 +1,11 @@
 package com.kakaobase.snsapp.domain.members.controller;
 
+import com.kakaobase.snsapp.domain.auth.principal.CustomUserDetails;
 import com.kakaobase.snsapp.domain.members.dto.MemberRequestDto;
 import com.kakaobase.snsapp.domain.members.dto.MemberResponseDto;
 import com.kakaobase.snsapp.domain.members.service.MemberService;
+import com.kakaobase.snsapp.domain.posts.dto.PostResponseDto;
+import com.kakaobase.snsapp.domain.posts.service.PostService;
 import com.kakaobase.snsapp.global.common.response.CustomResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,8 +18,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 회원 관련 API 컨트롤러
@@ -29,6 +36,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberService memberService;
+    private final PostService postService;
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다")
     @ApiResponses(value = {
@@ -55,6 +63,7 @@ public class MemberController {
             @ApiResponse(responseCode = "401", description = "로그인 되지 않음"),
             @ApiResponse(responseCode = "404", description = "해당 사용자를 찾을 수 없음")
     })
+
     @GetMapping("/{userId}")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public CustomResponse<MemberResponseDto.Mypage> getUserMyPage(
@@ -64,6 +73,21 @@ public class MemberController {
         MemberResponseDto.Mypage response = memberService.getMypageInfo(userId);
 
         return CustomResponse.success("유저 마이페이지 조회에 성공하였습니다", response);
+    }
+
+    @GetMapping("/{userId}/posts")
+    @Operation(summary = "유저가 작성한 게시글 목록 조회", description = "유저가 작성한 게시글 목록을 조회합니다.")
+    public CustomResponse<List<PostResponseDto.PostDetails>> getUserPosts(
+            @Parameter(description = "한 페이지에 표시할 게시글 수") @RequestParam(defaultValue = "12") int limit,
+            @Parameter(description = "마지막으로 조회한 게시글 ID") @RequestParam(required = false) Long cursor,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+
+        Long memberId = Long.valueOf(userDetails.getId());
+
+        List<PostResponseDto.PostDetails> response = postService.getUserPostList(limit, cursor, memberId);
+
+        return CustomResponse.success("유저 게시글이조회에 성공하였습니다",response);
     }
 
     @Operation(summary = "비밀번호 수정", description = "회원의 비밀번호를 수정합니다")
