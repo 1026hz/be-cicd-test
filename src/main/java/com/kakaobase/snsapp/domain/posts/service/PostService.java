@@ -65,8 +65,10 @@ public class PostService {
         }
 
         String youtubeUrl = requestDto.youtube_url();
+
+        Member proxyMember = em.find(Member.class, memberId);
         // 게시글 엔티티 생성
-        Post post = PostConverter.toPost(requestDto, memberId, boardType);
+        Post post = PostConverter.toPost(requestDto, proxyMember, boardType);
 
         // 게시글 저장
         Post savedPost = postRepository.save(post);
@@ -107,16 +109,16 @@ public class PostService {
         Post post = findById(postId);
 
         // 작성자 정보 조회
-        Map<String, String> userInfo = getMemberInfo(post.getMemberId());
+        Map<String, String> userInfo = getMemberInfo(post.getMember().getId());
 
         // 본인 게시글 여부 확인
-        boolean isMine = memberId != null && memberId.equals(post.getMemberId());
+        boolean isMine = memberId != null && memberId.equals(post.getMember().getId());
 
         // 좋아요 여부 확인
         boolean isLiked = memberId != null && postLikeService.isLikedByMember(postId, memberId);
 
         Member follower = em.getReference(Member.class, memberId);
-        Member following = em.getReference(Member.class, post.getMemberId());
+        Member following = em.getReference(Member.class, post.getMember().getId());
 
         // 팔로우 여부는 현재 비활성화 되어있으므로 false로 설정
         boolean isFollowing = followRepository.existsByFollowerUserAndFollowingUser(follower, following);
@@ -127,24 +129,6 @@ public class PostService {
         // 응답 DTO 생성 및 반환
         return PostConverter.toPostDetailResponse(
                 post, userInfo, postImages, isMine, isLiked, isFollowing);
-    }
-
-    /**
-     * 커서 기반 페이지네이션으로 게시글을 조회합니다.
-     *
-     * @param boardType 게시판 유형
-     * @param limit 한 페이지에 표시할 게시글 수
-     * @param cursor 마지막으로 조회한 게시글 ID
-     * @return 게시글 목록
-     */
-    public List<Post> findByCursor(Post.BoardType boardType, int limit, Long cursor) {
-        if (cursor == null) {
-            // 첫 페이지 조회
-            return postRepository.findTopNByBoardTypeOrderByCreatedAtDescIdDesc(boardType, limit);
-        } else {
-            // 다음 페이지 조회 (cursor 이후 데이터)
-            return postRepository.findByBoardTypeAndIdLessThanOrderByIdDesc(boardType, cursor, limit);
-        }
     }
 
     /**
@@ -193,11 +177,8 @@ public class PostService {
             throw new PostException(GeneralErrorCode.INVALID_QUERY_PARAMETER, "limit", "limit는 1 이상이어야 합니다.");
         }
 
-        // 2. 게시판 타입 변환
-        Post.BoardType boardType = PostConverter.toBoardType(postType);
-
         // 3. 게시글 조회
-        List<Post> posts = findByCursor(boardType, limit, cursor);
+        List<Post> posts = postRepository.findByBoardTypeWithCursor(postType, cursor, limit);
 
         // 4. 작성자 정보 조회
         Map<Long, Map<String, String>> memberInfoMap = getMemberInfoByPosts(posts);
@@ -237,15 +218,15 @@ public class PostService {
 
 
         // 회원 정보 조회
-        Map<String, String> userInfo = memberInfoMap.get(post.getMemberId());
+        Map<String, String> userInfo = memberInfoMap.get(post.getMember().getId());
 
         Member follower = em.getReference(Member.class, currentMemberId);
-        Member following = em.getReference(Member.class, post.getMemberId());
+        Member following = em.getReference(Member.class, post.getMember().getId());
         Boolean isFollowing = followRepository.existsByFollowerUserAndFollowingUser(follower, following);
 
         // UserInfo DTO 생성
         PostResponseDto.UserInfo user = new PostResponseDto.UserInfo(
-                post.getMemberId(),
+                post.getMember().getId(),
                 userInfo.get("nickname"),
                 userInfo.get("imageUrl"),
                 isFollowing
@@ -253,7 +234,7 @@ public class PostService {
         );
 
         // 본인 게시글 여부 및 좋아요 여부 확인
-        boolean isMine = currentMemberId != null && currentMemberId.equals(post.getMemberId());
+        boolean isMine = currentMemberId != null && currentMemberId.equals(post.getMember().getId());
         boolean isLiked = likedPostIds.contains(post.getId());
 
         return new PostResponseDto.PostListItem(
