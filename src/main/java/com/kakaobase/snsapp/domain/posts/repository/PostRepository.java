@@ -77,4 +77,17 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             @Param("memberId") Long memberId,
             @Param("cursor") Long cursor,
             Pageable pageable);
+
+    /**
+     * 특정 유저가 좋아요한 게시글을 조회
+     */
+    @Query("SELECT p FROM Post p " +
+            "WHERE EXISTS (SELECT 1 FROM PostLike pl WHERE pl.id.memberId = :memberId AND pl.id.postId = p.id) " +
+            "AND p.deletedAt IS NULL " +
+            "AND (:cursor IS NULL OR p.id < :cursor) " +
+            "ORDER BY p.createdAt DESC, p.id DESC")
+    List<Post> findLikedPostsByMemberIdWithCursor(
+            @Param("memberId") Long memberId,
+            @Param("cursor") Long cursor,
+            Pageable pageable);
 }
