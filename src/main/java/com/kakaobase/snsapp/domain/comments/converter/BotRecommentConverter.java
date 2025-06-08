@@ -7,9 +7,13 @@ import com.kakaobase.snsapp.domain.comments.entity.Recomment;
 import com.kakaobase.snsapp.domain.members.entity.Member;
 import com.kakaobase.snsapp.domain.posts.entity.Post;
 
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class BotRecommentConverter {
+
+    private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_INSTANT;
 
     public static BotRecommentRequestDto toRequestDto(
             Post post,
@@ -23,7 +27,7 @@ public class BotRecommentConverter {
                         postWriter.getNickname(),
                         postWriter.getClassName().toString()
                 ),
-                post.getCreatedAt().toString(),
+                formatUtc(post.getCreatedAt().toInstant(ZoneOffset.UTC)),
                 post.getContent()
         );
 
@@ -33,7 +37,7 @@ public class BotRecommentConverter {
                                 r.getMember().getNickname(),
                                 r.getMember().getClassName().toString()
                         ),
-                        r.getCreatedAt().toString(),
+                        formatUtc(r.getCreatedAt().toInstant(ZoneOffset.UTC)),
                         r.getContent()
                 ))
                 .toList();
@@ -44,7 +48,7 @@ public class BotRecommentConverter {
                         comment.getMember().getNickname(),
                         comment.getMember().getClassName().toString()
                 ),
-                comment.getCreatedAt().toString(),
+                formatUtc(comment.getCreatedAt().toInstant(ZoneOffset.UTC)),
                 comment.getContent(),
                 recommentDtos
         );
@@ -70,5 +74,9 @@ public class BotRecommentConverter {
                 ))
                 .content(content)
                 .build();
+    }
+
+    private static String formatUtc(java.time.Instant instant) {
+        return ISO_FORMATTER.format(instant); // ex: 2025-06-08T20:29:44.666858Z
     }
 }
