@@ -118,10 +118,15 @@ public class CommentService {
         Member postWriter = memberRepository.findById(post.getMemberId())
                 .orElseThrow(() -> new CommentException(GeneralErrorCode.RESOURCE_NOT_FOUND, "postWriter", "게시글 작성자를 찾을 수 없습니다."));
 
+        log.debug("🧠 [Check] 게시글 작성자 ID={}, Role={}", postWriter.getId(), postWriter.getRole());
+
         if (Member.Role.BOT.equals(postWriter.getRole())) {
-            log.info("🤖 [CommentService] 게시글 작성자가 소셜봇 - 대댓글 트리거 호출");
+            log.info("🤖 [Trigger] 소셜봇 게시글이므로 트리거 실행!");
             botRecommentService.triggerAsync(post, savedComment);
+        } else {
+            log.info("🙅 [Skip] 게시글 작성자가 소셜봇이 아님 → 트리거 생략");
         }
+
 
         return commentConverter.toCreateCommentResponse(savedComment);
     }
