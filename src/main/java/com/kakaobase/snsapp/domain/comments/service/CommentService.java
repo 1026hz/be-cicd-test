@@ -117,7 +117,7 @@ public class CommentService {
         log.debug("댓글 생성 이벤트 발행: {}", event);
 
         // 게시물 작성자가 소셜봇이면 소셜봇 대댓글 로직 구현하도록
-        if (post.getMember().getId() == 1213) {
+        if (post.getMember().getRole().equals("BOT")) {
             log.info("🤖 [Trigger] 소셜봇 게시글이므로 트리거 실행!");
             botRecommentService.triggerAsync(post, savedComment);
         } else {
@@ -294,11 +294,12 @@ public class CommentService {
 
 
     //특정 유저의 댓글 조회
+    @Transactional(readOnly = true)
     public List<CommentResponseDto.CommentInfo> getUserCommentList(int limit, Long cursor, Long memberId) {
 
-        Member currentUser = memberRepository.findById(memberId)
-                .orElseThrow(()->new CommentException(GeneralErrorCode.RESOURCE_NOT_FOUND, "userId"));
-
+        if(memberRepository.existsById(memberId)) {
+            throw new CommentException(GeneralErrorCode.RESOURCE_NOT_FOUND, "userId");
+        }
 
         Pageable pageable = PageRequest.of(0, limit);
 
@@ -319,7 +320,6 @@ public class CommentService {
         CommentResponseDto.CommentInfo commentInfo = getCommentInfo(memberId, commentId);
         return new CommentResponseDto.CommentDetailResponse(commentInfo);
     }
-
 
     /**
      * 댓글 정보를 반환

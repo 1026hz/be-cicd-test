@@ -110,9 +110,6 @@ public class PostService {
         // 게시글 조회
         Post post = findById(postId);
 
-        // 본인 게시글 여부 확인
-        boolean isMine = memberId != null && memberId.equals(post.getMember().getId());
-
         // 좋아요 여부 확인
         boolean isLiked = memberId != null && postLikeService.isLikedByMember(postId, memberId);
 
@@ -124,7 +121,7 @@ public class PostService {
         // 이미지 조회
         String postImage = null;
         List<PostImage> postImages = postImageRepository.findByPostIdOrderBySortIndexAsc(post.getId());
-        if(!postImages.get(0).getImgUrl().isBlank()){
+        if(!postImages.isEmpty()){
             postImage = postImages.get(0).getImgUrl();
         }
 
@@ -185,9 +182,7 @@ public class PostService {
         List<Post> posts = postRepository.findByBoardTypeWithCursor(boardType, cursor, pageable);
 
         // 3. PostListItem으로 변환
-        List<PostResponseDto.PostDetails> reponse = postConverter.convertToPostListItems(posts, currentMemberId);
-
-        return reponse;
+        return postConverter.convertToPostListItems(posts, currentMemberId);
     }
 
     /**
@@ -205,9 +200,7 @@ public class PostService {
         List<Post> posts = postRepository.findByMemberIdWithCursor(currentMemberId, cursor, pageable);
 
         // 3. PostListItem으로 변환
-        List<PostResponseDto.PostDetails> reponse = postConverter.convertToPostListItems(posts, currentMemberId);
-
-        return reponse;
+        return postConverter.convertToPostListItems(posts, currentMemberId);
 
     }
 
@@ -223,9 +216,7 @@ public class PostService {
         List<Post> posts = postRepository.findLikedPostsByMemberIdWithCursor(currentMemberId, cursor, pageable);
 
         // 3. PostListItem으로 변환
-        List<PostResponseDto.PostDetails> reponse = postConverter.convertToPostListItems(posts, currentMemberId);
-
-        return reponse;
+        return postConverter.convertToPostListItems(posts, currentMemberId);
     }
 
     /**
