@@ -104,7 +104,7 @@ hooks:
     - location: scripts/deploy.sh
       timeout: 60
       runas: ec2-user
-  EOF
+EOF
 
       - name: Zip deployment bundle
         run: zip -r be-deploy.zip appspec.yml scripts/ image-tag.txt
