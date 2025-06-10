@@ -65,13 +65,15 @@ jobs:
 
       - name: Save image info to JSON
         run: |
-          echo "{\"imageTag\":\"$IMAGE_TAG\", \"ecrRepo\":\"${{ secrets.ECR_REPO_BE }}\", \"awsRegion\":\"${{ secrets.AWS_REGION }}\"}" > imageDetail.json
+          echo "{\"imageTag\":\"$IMAGE_TAG\", \"ecrRepo\":\"${{ secrets.ECR_REPO_BE }}\", \"awsRegion\":\"${{ secrets.AWS_REGION }}\"}" > deploy/imageDetail.json
 
       - name: Confirm imageDetail.json
-        run: cat imageDetail.json
+        run: cat deploy/imageDetail.json
 
       - name: Zip deployment bundle
-        run: zip -r be-deploy.zip appspec.yml scripts/ imageDetail.json
+        run: |
+          cd deploy
+          zip -r ../be-deploy.zip appspec.yml scripts imageDetail.json
 
       - name: Upload bundle to S3
         run: aws s3 cp be-deploy.zip s3://${{ secrets.CODEDEPLOY_S3_BUCKET }}/be/be-deploy.zip
