@@ -1,13 +1,12 @@
 #!/bin/bash
-
-set -e  # 에러 발생 시 중단
+set -e
 
 CONTAINER_NAME=backend-app
 REGION=ap-northeast-2
 ECR_URI=<ECR_REPO_URI>
 
 echo "[0] Load image tag from file..."
-IMAGE_TAG=$(cat /home/ubuntu/image-tag.txt)
+IMAGE_TAG=$(cat ../image-tag.txt)
 
 echo "[1] Authenticate with ECR..."
 aws ecr get-login-password --region $REGION | \
