@@ -120,29 +120,29 @@ jobs:
             --s3-location bucket=${{ secrets.CODEDEPLOY_S3_BUCKET }},key=be/be-deploy.zip,bundleType=zip \
             --region ${{ secrets.AWS_REGION }}
 
-notify:
-  name: Discord Notification
-  needs: deploy
-  if: always()
-  runs-on: ubuntu-latest
+  notify:
+    name: Discord Notification
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Send Discord Notification
-      run: |
-        if [ "${{ needs.deploy.result }}" == "success" ]; then
-          STATUS="✅ Spring 배포 성공"
-          COLOR="5763719"
-        else
-          STATUS="❌ Spring 배포 실패"
-          COLOR="15158332"
-        fi
-        
-        curl -X POST -H "Content-Type: application/json" \
-          -d "{
-            \"embeds\": [{
-              \"title\": \"$STATUS: ${{ github.workflow }}\",
-              \"description\": \"브랜치: \`${{ github.ref_name }}\`\n커밋한 사람: \`${{ github.actor }}\`\n[👉 액션 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
-              \"color\": $COLOR
-            }]
-          }" \
-          ${{ secrets.DISCORD_WEBHOOK_URL }}
+    steps:
+      - name: Send Discord Notification
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            STATUS="✅ Spring 배포 성공"
+            COLOR="5763719"
+          else
+            STATUS="❌ Spring 배포 실패"
+            COLOR="15158332"
+          fi
+          
+          curl -X POST -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"$STATUS: ${{ github.workflow }}\",
+                \"description\": \"브랜치: \`${{ github.ref_name }}\`\n커밋한 사람: \`${{ github.actor }}\`\n[👉 액션 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
+                \"color\": $COLOR
+              }]
+            }" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
