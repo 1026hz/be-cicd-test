@@ -78,8 +78,7 @@ jobs:
           sed -i 's|<ECR_REPO_URI>|'"${{ secrets.ECR_REPO_BE }}"'|g' scripts/deploy.sh
           chmod +x scripts/deploy.sh
 
-      - name:
-          Debug: Confirm deploy.sh after sed
+      - name: Confirm deploy.sh after sed
         run: cat scripts/deploy.sh | head -n 10
 
       - name: Generate appspec.yml
