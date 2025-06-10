@@ -7,7 +7,7 @@ REGION=ap-northeast-2
 ECR_URI=<ECR_REPO_URI>
 
 echo "[0] Load image tag from file..."
-IMAGE_TAG=$(cat /home/ec2-user/image-tag.txt)
+IMAGE_TAG=$(cat /home/ubuntu/image-tag.txt)
 
 echo "[1] Authenticate with ECR..."
 aws ecr get-login-password --region $REGION | \
