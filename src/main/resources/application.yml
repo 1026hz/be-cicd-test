@@ -16,11 +16,14 @@ spring:
         format_sql: true
         jdbc:
           time_zone: UTC
+  config:
+    import: optional:aws-parameterstore:/kakaobase/backend/
   cloud:
     aws:
       credentials:
         access-key: ${AWS_ACCESS_KEY}
         secret-key: ${AWS_SECRET_KEY}
+        instance-profile: true
       region:
         static: ap-northeast-2
       s3:
