@@ -81,30 +81,30 @@ jobs:
       - name: Generate appspec.yml
         run: |
           cat <<EOF > appspec.yml
-version: 0.0
-os: linux
-files:
-  - source: /
-    destination: /home/ec2-user
-    overwrite: yes
-
-permissions:
-  - object: /
-    pattern: "**"
-    owner: ec2-user
-    group: ec2-user
-    mode: 755
-
-hooks:
-  ApplicationStop:
-    - location: scripts/stop.sh
-      timeout: 60
-      runas: ec2-user
-  AfterInstall:
-    - location: scripts/deploy.sh
-      timeout: 60
-      runas: ec2-user
-EOF
+          version: 0.0
+          os: linux
+          files:
+            - source: /
+              destination: /home/ec2-user
+              overwrite: yes
+          
+          permissions:
+            - object: /
+              pattern: "**"
+              owner: ec2-user
+              group: ec2-user
+              mode: 755
+          
+          hooks:
+            ApplicationStop:
+              - location: scripts/stop.sh
+                timeout: 60
+                runas: ec2-user
+            AfterInstall:
+              - location: scripts/deploy.sh
+                timeout: 60
+                runas: ec2-user
+          EOF
 
       - name: Zip deployment bundle
         run: zip -r be-deploy.zip appspec.yml scripts/ image-tag.txt
