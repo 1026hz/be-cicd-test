@@ -9,9 +9,6 @@ on:
       - '**.md'
       - '**/README*'
 
-env:
-  ENV: prod
-
 jobs:
   deploy:
     name: Deploy Spring Backend to AWS
@@ -58,6 +55,10 @@ jobs:
           echo "TAG=${TAG}" >> $GITHUB_ENV
           echo "IMAGE_TAG=prod-${SHORT_SHA}-${TAG}" >> $GITHUB_ENV
 
+      - name: Save image tag to file
+        run: |
+          echo "${{ env.IMAGE_TAG }}" > image-tag.txt
+
       - name: Build Docker Image
         run: docker build -t ${{ secrets.ECR_REPO_BE }}:temp .
 
@@ -73,75 +74,75 @@ jobs:
 
       - name: Inject variables into deploy.sh
         run: |
-          sed -i "s|<IMAGE_TAG>|${{ env.IMAGE_TAG }}|g" scripts/deploy.sh
+          sed -i "s|<IMAGE_TAG>|${{ env.IMAGE_TAG }}|g" image-tag.txt  # 안전상 미리 사용됨
+          sed -i "s|<ECR_REPO_URI>|${{ secrets.ECR_REPO_BE }}|g" scripts/deploy.sh
           chmod +x scripts/deploy.sh
 
       - name: Generate appspec.yml
         run: |
           cat <<EOF > appspec.yml
-          version: 0.0
-          os: linux
-          files:
-            - source: /
-              destination: /home/ec2-user
-              overwrite: yes
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ec2-user
+    overwrite: yes
 
-          permissions:
-            - object: /
-              pattern: "**"
-              owner: ec2-user
-              group: ec2-user
-              mode: 755
+permissions:
+  - object: /
+    pattern: "**"
+    owner: ec2-user
+    group: ec2-user
+    mode: 755
 
-          hooks:
-            ApplicationStop:
-              - location: scripts/stop.sh
-                timeout: 60
-                runas: ec2-user
-            AfterInstall:
-              - location: scripts/deploy.sh
-                timeout: 60
-                runas: ec2-user
-          EOF
+hooks:
+  ApplicationStop:
+    - location: scripts/stop.sh
+      timeout: 60
+      runas: ec2-user
+  AfterInstall:
+    - location: scripts/deploy.sh
+      timeout: 60
+      runas: ec2-user
+  EOF
 
       - name: Zip deployment bundle
-        run: zip -r appspec.zip appspec.yml scripts/
+        run: zip -r be-deploy.zip appspec.yml scripts/ image-tag.txt
 
       - name: Upload bundle to S3
-        run: aws s3 cp appspec.zip s3://${{ secrets.CODEDEPLOY_S3_BUCKET }}/appspec.zip
+        run: aws s3 cp be-deploy.zip s3://${{ secrets.CODEDEPLOY_S3_BUCKET }}/be/be-deploy.zip
 
       - name: Deploy via CodeDeploy
         run: |
           aws deploy create-deployment \
             --application-name ${{ secrets.CODEDEPLOY_APP_NAME }} \
             --deployment-group-name ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP }} \
-            --s3-location bucket=${{ secrets.CODEDEPLOY_S3_BUCKET }},key=appspec.zip,bundleType=zip \
-            --file-exists-behavior OVERWRITE
+            --s3-location bucket=${{ secrets.CODEDEPLOY_S3_BUCKET }},key=be/be-deploy.zip,bundleType=zip \
+            --region ${{ secrets.AWS_REGION }}
 
-  notify:
-    name: Discord Notification
-    needs: deploy
-    if: always()
-    runs-on: ubuntu-latest
+notify:
+  name: Discord Notification
+  needs: deploy
+  if: always()
+  runs-on: ubuntu-latest
 
-    steps:
-      - name: Send Discord Notification
-        run: |
-          if [ "${{ needs.deploy.result }}" == "success" ]; then
-            STATUS="✅ Spring 배포 성공"
-            COLOR="5763719"
-          else
-            STATUS="❌ Spring 배포 실패"
-            COLOR="15158332"
-          fi
-
-          curl -X POST -H "Content-Type: application/json" \
-            -d "{
-              \"embeds\": [{
-                \"title\": \"$STATUS: ${{ github.workflow }}\",
-                \"description\": \"브랜치: \`${{ github.ref_name }}\`\n커밋한 사람: \`${{ github.actor }}\`\n[👉 액션 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
-                \"color\": $COLOR
-              }]
-            }" \
-            ${{ secrets.DISCORD_WEBHOOK_URL }}
-
+  steps:
+    - name: Send Discord Notification
+      run: |
+        if [ "${{ needs.deploy.result }}" == "success" ]; then
+          STATUS="✅ Spring 배포 성공"
+          COLOR="5763719"
+        else
+          STATUS="❌ Spring 배포 실패"
+          COLOR="15158332"
+        fi
+        
+        curl -X POST -H "Content-Type: application/json" \
+          -d "{
+            \"embeds\": [{
+              \"title\": \"$STATUS: ${{ github.workflow }}\",
+              \"description\": \"브랜치: \`${{ github.ref_name }}\`\n커밋한 사람: \`${{ github.actor }}\`\n[👉 액션 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
+              \"color\": $COLOR
+            }]
+          }" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
