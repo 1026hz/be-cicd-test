@@ -22,6 +22,7 @@ docker pull $ECR_URI:$IMAGE_TAG
 
 echo "[5] Load environment variables from SSM..."
 
+
 PARAM_KEYS=(
   DISCORD_ERROR_WEBHOOK_URL
   JWT_SECRET
