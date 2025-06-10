@@ -1,0 +1,145 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '**/README*'
+
+env:
+  ENV: prod
+
+jobs:
+  deploy:
+    name: Deploy Spring Backend to AWS
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Gradle Caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build Spring Project
+        run: ./gradlew build -x test
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.DEPLOY_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEPLOY_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Set deployment variables
+        run: |
+          echo "TAG=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+          echo "IMAGE_TAG=prod-${{ github.sha::0:7 }}-${TAG}" >> $GITHUB_ENV
+
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.ECR_REPO_BE }}:temp .
+
+      - name: Tag Docker Image
+        run: |
+          docker tag ${{ secrets.ECR_REPO_BE }}:temp ${{ secrets.ECR_REPO_BE }}:latest
+          docker tag ${{ secrets.ECR_REPO_BE }}:temp ${{ secrets.ECR_REPO_BE }}:${{ env.IMAGE_TAG }}
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.ECR_REPO_BE }}:latest
+          docker push ${{ secrets.ECR_REPO_BE }}:${{ env.IMAGE_TAG }}
+
+      - name: Inject variables into deploy.sh
+        run: |
+          sed -i "s|<IMAGE_TAG>|${{ env.IMAGE_TAG }}|g" scripts/deploy.sh
+          chmod +x scripts/deploy.sh
+
+      - name: Generate appspec.yml
+        run: |
+          cat <<EOF > appspec.yml
+          version: 0.0
+          os: linux
+          files:
+            - source: /
+              destination: /home/ec2-user
+              overwrite: yes
+
+          permissions:
+            - object: /
+              pattern: "**"
+              owner: ec2-user
+              group: ec2-user
+              mode: 755
+
+          hooks:
+            ApplicationStop:
+              - location: scripts/stop.sh
+                timeout: 60
+                runas: ec2-user
+            AfterInstall:
+              - location: scripts/deploy.sh
+                timeout: 60
+                runas: ec2-user
+          EOF
+
+      - name: Zip deployment bundle
+        run: zip -r appspec.zip appspec.yml scripts/
+
+      - name: Upload bundle to S3
+        run: aws s3 cp appspec.zip s3://${{ secrets.CODEDEPLOY_S3_BUCKET }}/appspec.zip
+
+      - name: Deploy via CodeDeploy
+        uses: webfactory/create-aws-codedeploy-deployment@v1
+        with:
+          application-name: ${{ secrets.CODEDEPLOY_APP_NAME }}
+          deployment-group: ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP }}
+          bundle-bucket: ${{ secrets.CODEDEPLOY_S3_BUCKET }}
+          bundle-key: appspec.zip
+          revision-type: S3
+
+  notify:
+    name: Discord Notification
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord Notification
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            STATUS="✅ Spring 배포 성공"
+            COLOR="5763719"
+          else
+            STATUS="❌ Spring 배포 실패"
+            COLOR="15158332"
+          fi
+
+          curl -X POST -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"$STATUS: ${{ github.workflow }}\",
+                \"description\": \"브랜치: \`${{ github.ref_name }}\`\n커밋한 사람: \`${{ github.actor }}\`\n[👉 액션 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
+                \"color\": $COLOR
+              }]
+            }" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
