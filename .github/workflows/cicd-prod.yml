@@ -74,9 +74,13 @@ jobs:
 
       - name: Inject variables into deploy.sh
         run: |
-          sed -i "s|<IMAGE_TAG>|${{ env.IMAGE_TAG }}|g" image-tag.txt  # 안전상 미리 사용됨
-          sed -i "s|<ECR_REPO_URI>|${{ secrets.ECR_REPO_BE }}|g" scripts/deploy.sh
+          sed -i 's|<IMAGE_TAG>|'"${{ env.IMAGE_TAG }}"'|g' image-tag.txt
+          sed -i 's|<ECR_REPO_URI>|'"${{ secrets.ECR_REPO_BE }}"'|g' scripts/deploy.sh
           chmod +x scripts/deploy.sh
+
+      - name:
+          Debug: Confirm deploy.sh after sed
+        run: cat scripts/deploy.sh | head -n 10
 
       - name: Generate appspec.yml
         run: |
