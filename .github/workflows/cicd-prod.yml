@@ -52,66 +52,26 @@ jobs:
         run: |
           TAG=$(date +%Y%m%d%H%M%S)
           SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          echo "TAG=${TAG}" >> $GITHUB_ENV
-          echo "IMAGE_TAG=prod-${SHORT_SHA}-${TAG}" >> $GITHUB_ENV
-
-      - name: Save image tag to file
-        run: |
-          echo "${{ env.IMAGE_TAG }}" > image-tag.txt
+          IMAGE_TAG=prod-${SHORT_SHA}-${TAG}
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.ECR_REPO_BE }}:temp .
-
-      - name: Tag Docker Image
-        run: |
-          docker tag ${{ secrets.ECR_REPO_BE }}:temp ${{ secrets.ECR_REPO_BE }}:latest
-          docker tag ${{ secrets.ECR_REPO_BE }}:temp ${{ secrets.ECR_REPO_BE }}:${{ env.IMAGE_TAG }}
+        run: docker build -t ${{ secrets.ECR_REPO_BE }}:$IMAGE_TAG -t ${{ secrets.ECR_REPO_BE }}:latest .
 
       - name: Push Docker Image
         run: |
+          docker push ${{ secrets.ECR_REPO_BE }}:$IMAGE_TAG
           docker push ${{ secrets.ECR_REPO_BE }}:latest
-          docker push ${{ secrets.ECR_REPO_BE }}:${{ env.IMAGE_TAG }}
 
-      - name: Inject variables into deploy.sh
+      - name: Save image info to JSON
         run: |
-          sed -i 's|<IMAGE_TAG>|'"${{ env.IMAGE_TAG }}"'|g' image-tag.txt
-          sed -i 's|<ECR_REPO_URI>|'"${{ secrets.ECR_REPO_BE }}"'|g' scripts/deploy.sh
-          chmod +x scripts/deploy.sh
+          echo "{\"imageTag\":\"$IMAGE_TAG\", \"ecrRepo\":\"${{ secrets.ECR_REPO_BE }}\", \"awsRegion\":\"${{ secrets.AWS_REGION }}\"}" > imageDetail.json
 
-      - name: Confirm deploy.sh after sed
-        run: cat scripts/deploy.sh | head -n 10
-
-      - name: Generate appspec.yml
-        run: |
-          cat <<EOF > appspec.yml
-          version: 0.0
-          os: linux
-          
-          files:
-            - source: /
-              destination: /home/ubuntu
-              overwrite: yes
-          
-          permissions:
-            - object: /
-              pattern: "**"
-              owner: ubuntu
-              group: ubuntu
-              mode: 755
-          
-          hooks:
-            ApplicationStop:
-              - location: scripts/stop.sh
-                timeout: 60
-                runas: ubuntu
-            AfterInstall:
-              - location: scripts/deploy.sh
-                timeout: 60
-                runas: ubuntu
-          EOF
+      - name: Confirm imageDetail.json
+        run: cat imageDetail.json
 
       - name: Zip deployment bundle
-        run: zip -r be-deploy.zip appspec.yml scripts/ image-tag.txt
+        run: zip -r be-deploy.zip appspec.yml scripts/ imageDetail.json
 
       - name: Upload bundle to S3
         run: aws s3 cp be-deploy.zip s3://${{ secrets.CODEDEPLOY_S3_BUCKET }}/be/be-deploy.zip
@@ -140,7 +100,7 @@ jobs:
             STATUS="❌ Spring 배포 실패"
             COLOR="15158332"
           fi
-          
+
           curl -X POST -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{
@@ -150,4 +110,3 @@ jobs:
               }]
             }" \
             ${{ secrets.DISCORD_WEBHOOK_URL }}
-
