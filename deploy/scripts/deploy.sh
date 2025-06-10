@@ -37,7 +37,6 @@ PARAM_KEYS=(
   AI_SERVER_URL
 )
 
-
 DOCKER_ENV_ARGS=""
 
 for KEY in "${PARAM_KEYS[@]}"; do
