@@ -53,8 +53,10 @@ jobs:
 
       - name: Set deployment variables
         run: |
-          echo "TAG=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-          echo "IMAGE_TAG=prod-${{ github.sha::0:7 }}-${TAG}" >> $GITHUB_ENV
+          TAG=$(date +%Y%m%d%H%M%S)
+          SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          echo "TAG=${TAG}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=prod-${SHORT_SHA}-${TAG}" >> $GITHUB_ENV
 
       - name: Build Docker Image
         run: docker build -t ${{ secrets.ECR_REPO_BE }}:temp .
