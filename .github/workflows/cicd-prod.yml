@@ -83,6 +83,7 @@ jobs:
           cat <<EOF > appspec.yml
           version: 0.0
           os: linux
+          
           files:
             - source: /
               destination: /home/ubuntu
