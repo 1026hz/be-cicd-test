@@ -111,13 +111,12 @@ jobs:
         run: aws s3 cp appspec.zip s3://${{ secrets.CODEDEPLOY_S3_BUCKET }}/appspec.zip
 
       - name: Deploy via CodeDeploy
-        uses: webfactory/create-aws-codedeploy-deployment@v1
-        with:
-          application-name: ${{ secrets.CODEDEPLOY_APP_NAME }}
-          deployment-group: ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP }}
-          bundle-bucket: ${{ secrets.CODEDEPLOY_S3_BUCKET }}
-          bundle-key: appspec.zip
-          revision-type: S3
+        run: |
+          aws deploy create-deployment \
+            --application-name ${{ secrets.CODEDEPLOY_APP_NAME }} \
+            --deployment-group-name ${{ secrets.CODEDEPLOY_DEPLOYMENT_GROUP }} \
+            --s3-location bucket=${{ secrets.CODEDEPLOY_S3_BUCKET }},key=appspec.zip,bundleType=zip \
+            --file-exists-behavior OVERWRITE
 
   notify:
     name: Discord Notification
