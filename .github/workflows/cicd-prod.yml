@@ -86,6 +86,7 @@ jobs:
             --s3-location bucket=${{ secrets.CODEDEPLOY_S3_BUCKET }},key=be/be-deploy.zip,bundleType=zip \
             --region ${{ secrets.AWS_REGION }}
 
+
   notify:
     name: Discord Notification
     needs: deploy
