@@ -1,0 +1,100 @@
+name: Backend CI/CD - Develop
+
+on:
+  pull_request:
+    branches: [develop]
+  push:
+    branches: [develop]
+
+jobs:
+  ci:
+    name: CI (Build & Lint)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Lint (Checkstyle)
+        run: ./gradlew checkstyleMain checkstyleTest
+
+      - name: Build (Gradle)
+        run: ./gradlew build
+
+  cd:
+    name: CD (Deploy to EC2 via SSM)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.DEPLOY_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEPLOY_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ap-northeast-2 | \
+          docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+      - name: Build & Push Docker image
+        run: |
+          IMAGE_URI=${{ secrets.ECR_REPO_BE }}:latest
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+
+      - name: Deploy to EC2 via SSM
+        run: |
+          IMAGE_URI=${{ secrets.ECR_REPO_BE }}:latest
+          aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --comment "GitHub Actions 배포" \
+            --targets "Key=tag:Name,Values=${{ secrets.SSM_INSTANCE_TAG }}" \
+            --parameters 'commands=[
+              "docker stop backend-app || true",
+              "docker rm backend-app || true",
+              "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPO_BE }}",
+              "PARAM_KEYS=(DISCORD_ERROR_WEBHOOK_URL JWT_SECRET MYSQL_URL MYSQL_PASSWORD COOKIE_DOMAIN EMAIL EMAIL_PASSWORD BUCKET_NAME AWS_ACCESS_KEY AWS_SECRET_KEY AI_SERVER_URL)",
+              "DOCKER_ENV_ARGS=\"\"",
+              "for KEY in ${PARAM_KEYS[@]}; do VALUE=$(aws ssm get-parameter --name \"/kakaobase/dev/$KEY\" --with-decryption --region ap-northeast-2 --query \"Parameter.Value\" --output text); DOCKER_ENV_ARGS+=\" -e $KEY=\\\"$VALUE\\\"\"; done",
+              "eval docker run -d --name backend-app -e SPRING_PROFILES_ACTIVE=dev $DOCKER_ENV_ARGS -p 8080:8080 $IMAGE_URI"
+            ]' \
+            --region ap-northeast-2 \
+            --timeout-seconds 600
+
+  notify:
+    name: Discord Notification
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        run: |
+          EVENT="${{ github.event_name }}"
+          COLOR="8359053"
+          STATUS="⚪ CI/CD 실행됨 (조건: $EVENT)"
+
+          if [[ "$EVENT" == "pull_request" ]]; then
+            STATUS="✅ PR용 CI 성공"
+            COLOR="5763719"
+          elif [[ "$EVENT" == "push" ]]; then
+            STATUS="✅ Push용 CD 성공"
+            COLOR="3066993"
+          fi
+
+          curl -X POST -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"🔔 GitHub Actions 결과: ${{ github.workflow }}\",
+                \"description\": \"$STATUS\n브랜치: \`${{ github.ref_name }}\`\n커밋: \`${{ github.actor }}\`\n[👉 실행 로그 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
+                \"color\": $COLOR
+              }]
+            }" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
