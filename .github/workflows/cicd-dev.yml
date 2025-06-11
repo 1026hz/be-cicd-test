@@ -72,14 +72,14 @@ jobs:
               "docker rm backend-app || true",
               "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin '${{ secrets.ECR_REPO_BE }}'",
               "bash -c '\''\
-            KEYS=\"DISCORD_ERROR_WEBHOOK_URL JWT_SECRET MYSQL_URL MYSQL_PASSWORD COOKIE_DOMAIN EMAIL EMAIL_PASSWORD BUCKET_NAME AWS_ACCESS_KEY AWS_SECRET_KEY AI_SERVER_URL\"; \
-            DOCKER_ENV_ARGS=\"\"; \
-            for KEY in $KEYS; do \
-              VALUE=$(aws ssm get-parameter --name \"/kakaobase/dev/$KEY\" --with-decryption --region ap-northeast-2 --query \"Parameter.Value\" --output text); \
-              DOCKER_ENV_ARGS=\"$DOCKER_ENV_ARGS -e $KEY=$VALUE\"; \
-            done; \
-            echo \"Launching with SPRING_PROFILES_ACTIVE=dev and envs: $DOCKER_ENV_ARGS\"; \
-            docker run -d --name backend-app \
+              KEYS=\"DISCORD_ERROR_WEBHOOK_URL JWT_SECRET MYSQL_URL MYSQL_PASSWORD COOKIE_DOMAIN EMAIL EMAIL_PASSWORD BUCKET_NAME AWS_ACCESS_KEY AWS_SECRET_KEY AI_SERVER_URL\"; \
+              DOCKER_ENV_ARGS=\"\"; \
+              for KEY in $KEYS; do \
+                VALUE=$(aws ssm get-parameter --name \"/kakaobase/dev/$KEY\" --with-decryption --region ap-northeast-2 --query \"Parameter.Value\" --output text); \
+                DOCKER_ENV_ARGS=\"$DOCKER_ENV_ARGS -e $KEY=$VALUE\"; \
+              done; \
+              echo \"Launching with SPRING_PROFILES_ACTIVE=dev and envs: $DOCKER_ENV_ARGS\"; \
+              docker run -d --name backend-app \
               -e SPRING_PROFILES_ACTIVE=dev $DOCKER_ENV_ARGS -p 8080:8080 ${IMAGE_URI}\
             '\''"
             ]' \
