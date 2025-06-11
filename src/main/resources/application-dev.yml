@@ -1,7 +1,7 @@
 spring:
-  profiles: dev
   config:
     import: optional:aws-parameterstore:/kakaobase/dev/
+
 app:
   jwt:
     secure: true
