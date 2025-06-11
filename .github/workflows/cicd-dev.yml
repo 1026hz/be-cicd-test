@@ -6,7 +6,6 @@ on:
   push:
     branches: [develop]
 
-
 jobs:
   ci:
     name: CI (Build & Lint)
@@ -33,6 +32,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build Spring Boot app
+        run: ./gradlew build -x test
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -74,20 +82,32 @@ jobs:
   notify:
     name: Discord Notification
     if: always()
+    needs: [ ci, cd ]
     runs-on: ubuntu-latest
+
     steps:
       - name: Send Discord Notification
         run: |
-          EVENT="${{ github.event_name }}"
-          COLOR="8359053"
-          STATUS="⚪ CI/CD 실행됨 (조건: $EVENT)"
+          CI_RESULT="${{ needs.ci.result || 'skipped' }}"
+          CD_RESULT="${{ needs.cd.result || 'skipped' }}"
 
-          if [[ "$EVENT" == "pull_request" ]]; then
+          COLOR="8359053"
+          STATUS="⚪ CI/CD 실행됨"
+
+          if [ "$CI_RESULT" = "success" ]; then
             STATUS="✅ PR용 CI 성공"
             COLOR="5763719"
-          elif [[ "$EVENT" == "push" ]]; then
+          elif [ "$CI_RESULT" = "failure" ]; then
+            STATUS="❌ PR용 CI 실패"
+            COLOR="15158332"
+          fi
+
+          if [ "$CD_RESULT" = "success" ]; then
             STATUS="✅ Push용 CD 성공"
             COLOR="3066993"
+          elif [ "$CD_RESULT" = "failure" ]; then
+            STATUS="❌ Push용 CD 실패"
+            COLOR="15158332"
           fi
 
           curl -X POST -H "Content-Type: application/json" \
