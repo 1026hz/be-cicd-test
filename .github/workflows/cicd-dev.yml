@@ -61,24 +61,30 @@ jobs:
           docker push $IMAGE_URI
 
       - name: Deploy to EC2 via SSM
-        run: |
-          IMAGE_URI=${{ secrets.ECR_REPO_BE }}:latest
-          aws ssm send-command \
-            --document-name "AWS-RunShellScript" \
-            --comment "GitHub Actions 배포" \
-            --instance-ids ${{ secrets.SSM_INSTANCE_TAG }} \
-            --parameters 'commands=[
-              "IMAGE_URI='${{ secrets.ECR_REPO_BE }}:latest'",
-              "docker stop backend-app || true",
-              "docker rm backend-app || true",
-              "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_REPO_BE }}",
-              "KEYS=\"DISCORD_ERROR_WEBHOOK_URL JWT_SECRET MYSQL_URL MYSQL_PASSWORD COOKIE_DOMAIN EMAIL EMAIL_PASSWORD BUCKET_NAME AWS_ACCESS_KEY AWS_SECRET_KEY AI_SERVER_URL\"",
-              "DOCKER_ENV_ARGS=\"\"",
-              "for KEY in $KEYS; do VALUE=$(aws ssm get-parameter --name \"/kakaobase/dev/$KEY\" --with-decryption --region ap-northeast-2 --query \\\"Parameter.Value\\\" --output text); DOCKER_ENV_ARGS=\"$DOCKER_ENV_ARGS -e $KEY=\\\"$VALUE\\\"\"; done",
-              "eval docker run -d --name backend-app -e SPRING_PROFILES_ACTIVE=dev $DOCKER_ENV_ARGS -p 8080:8080 $IMAGE_URI"
-            ]' \
-            --region ap-northeast-2 \
-            --timeout-seconds 600
+  run: |
+    IMAGE_URI=${{ secrets.ECR_REPO_BE }}:latest
+    aws ssm send-command \
+      --document-name "AWS-RunShellScript" \
+      --comment "GitHub Actions 배포" \
+      --instance-ids ${{ secrets.SSM_INSTANCE_TAG }} \
+      --parameters 'commands=[
+        "docker stop backend-app || true",
+        "docker rm backend-app || true",
+        "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin '${{ secrets.ECR_REPO_BE }}'",
+        "bash -c '\''\
+          KEYS=\"DISCORD_ERROR_WEBHOOK_URL JWT_SECRET MYSQL_URL MYSQL_PASSWORD COOKIE_DOMAIN EMAIL EMAIL_PASSWORD BUCKET_NAME AWS_ACCESS_KEY AWS_SECRET_KEY AI_SERVER_URL\"; \
+          DOCKER_ENV_ARGS=\"\"; \
+          for KEY in $KEYS; do \
+            VALUE=$(aws ssm get-parameter --name \"/kakaobase/dev/$KEY\" --with-decryption --region ap-northeast-2 --query \"Parameter.Value\" --output text); \
+            DOCKER_ENV_ARGS=\"$DOCKER_ENV_ARGS -e $KEY=\\\"$VALUE\\\"\"; \
+          done; \
+          echo \"Launching with envs: $DOCKER_ENV_ARGS\"; \
+          docker run -d --name backend-app -e SPRING_PROFILES_ACTIVE=dev $DOCKER_ENV_ARGS -p 8080:8080 '${IMAGE_URI}'\
+        '\''
+      ]' \
+      --region ap-northeast-2 \
+      --timeout-seconds 600
+  
   
 
   notify:
