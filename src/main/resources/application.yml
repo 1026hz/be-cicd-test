@@ -16,8 +16,6 @@ spring:
         format_sql: true
         jdbc:
           time_zone: UTC
-  config:
-    import: optional:aws-parameterstore:/kakaobase/backend/
   cloud:
     aws:
       credentials:
