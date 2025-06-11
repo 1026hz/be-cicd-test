@@ -56,13 +56,13 @@ jobs:
 
       - name: Build & Push Docker image
         run: |
-          IMAGE_URI=${{ secrets.ECR_REPO_BE }}:latest
+          IMAGE_URI=${{ secrets.ECR_REPO_BE }}:dev
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
 
       - name: Deploy to EC2 via SSM
         run: |
-          IMAGE_URI=${{ secrets.ECR_REPO_BE }}:latest
+          IMAGE_URI=${{ secrets.ECR_REPO_BE }}:dev
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --comment "GitHub Actions 배포" \

@@ -1,8 +1,6 @@
 spring:
   application:
     name : 22-tenten-be
-  config:
-    import: optional:aws-parameterstore:/kakaobase/dev/
   datasource:
     url: ${MYSQL_URL}
     username: root

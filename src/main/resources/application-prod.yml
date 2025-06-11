@@ -2,6 +2,7 @@ spring:
   config:
     activate:
       on-profile: prod
+    import: optional:aws-parameterstore:/kakaobase/backend/
 
 app:
   jwt:
