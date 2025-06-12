@@ -54,19 +54,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // 1) 컨텍스트 경로 (application 레벨, 보통 "") 와
-        // 2) 서블릿 매핑 경로 (spring.mvc.servlet.path 에 지정한 "/api")
-        // 두 개를 합쳐서 잘라냅니다.
-        String contextPath = request.getContextPath();     // ex) ""
-        String servletPath = request.getServletPath();     // ex) "/api"
-        String uri         = request.getRequestURI();      // ex) "/api/users/email/verification-requests"
 
-        // 잘라낼 길이 = contextPath + servletPath
-        int prefixLength = contextPath.length() + servletPath.length();
-
-        // 실제 매핑된 컨트롤러 경로만 남게 됨: "/users/email/verification-requests"
-        String path = uri.substring(prefixLength);
-
+        String path = request.getPathInfo();
         String method = request.getMethod();
 
         if (pathMatcher.match("/users", path) && method.equals("POST")) {
