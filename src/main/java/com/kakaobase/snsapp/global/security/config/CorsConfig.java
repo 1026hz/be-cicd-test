@@ -28,7 +28,8 @@ public class CorsConfig {
                 "http://kakaobase.com",
                 "https://kakaobase.com",
                 "http://13.124.52.205:81",
-                "https://13.124.52.205:81"
+                "https://13.124.52.205:81",
+                "https://dev.kakaobase.com"
 
         ));
         config.addAllowedHeader("*");
