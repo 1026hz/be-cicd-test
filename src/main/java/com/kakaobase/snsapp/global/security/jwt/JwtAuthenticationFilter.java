@@ -54,13 +54,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        String method = request.getMethod();
+        // 컨텍스트(/api)를 제외한 실제 경로를 얻기 위해 getRequestURI()에서 contextPath 길이만큼 잘라냅니다.
+        String contextPath = request.getContextPath();                       // ex) "/api"
+        String uri         = request.getRequestURI();                        // ex) "/api/users/email/verification-requests"
+        String path        = uri.substring(contextPath.length());            // ex) "/users/email/verification-requests"
+        String method      = request.getMethod();
 
         if (pathMatcher.match("/users", path) && method.equals("POST")) {
             return true;
         }
 
+        // 그 외 excludedPaths 목록과 매칭되는 경로는 필터를 적용하지 않음
         return excludedPaths.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
