@@ -35,14 +35,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 필터를 적용하지 않을 경로 패턴 목록
     private final List<String> excludedPaths = List.of(
-            "/auth/tokens",
-            "/auth/tokens/refresh",
-            "/users/email/verification-requests",
-            "/users/email/verification",
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/actuator/health",
-            "/api/actuator/health"
+            "/api/auth/tokens",
+            "/api/auth/tokens/refresh",
+            "/api/users/email/verification-requests",
+            "/api/users/email/verification",
+            "/api/swagger-ui/**",
+            "/api/v3/api-docs/**",
+            "/actuator/health"
     );
 
     /**
@@ -54,17 +53,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-
-        String uri = request.getRequestURI();      // ex) "/api/users/email/verification-requests"
-        // uri이 "/api"로 시작하면 앞 4글자("/api")를 잘라내고, 아니면 그대로 사용
-        String path = uri.startsWith("/api") ? uri.substring(4) : uri;
+        String path = request.getServletPath();
         String method = request.getMethod();
 
         if (pathMatcher.match("/users", path) && method.equals("POST")) {
             return true;
         }
 
-        // 그 외 excludedPaths 목록과 매칭되는 경로는 필터를 적용하지 않음
         return excludedPaths.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
@@ -81,7 +76,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
 
         // 요청 정보 로깅
         log.debug("JwtAuthenticationFilter 실행 - URI: {}, 메서드: {}", request.getRequestURI(), request.getMethod());
