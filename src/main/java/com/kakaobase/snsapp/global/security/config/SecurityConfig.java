@@ -40,17 +40,17 @@ public class SecurityConfig {
                 // 스프링의 context-path("/api")가 앞에 붙는 걸 고려해서
                 // 여기는 반드시 "/api/..." 전체 경로를 써야 합니다
                 .requestMatchers(
-                        "/api/v3/api-docs/**",
-                        "/api/swagger-ui/**",
-                        "/api/swagger-ui.html"
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html"
                 )
-                .requestMatchers("/api/auth/tokens", "/api/auth/tokens/refresh")
-                .requestMatchers("/api/users/email/verification-requests")
-                .requestMatchers("/api/users/email/verification")
+                .requestMatchers("/auth/tokens", "/auth/tokens/refresh")
+                .requestMatchers("/users/email/verification-requests")
+                .requestMatchers("/users/email/verification")
                 .requestMatchers("/api/actuator/health")
                 .requestMatchers("/actuator/health")
-                .requestMatchers(HttpMethod.POST, "/api/users")
-                .requestMatchers(HttpMethod.DELETE, "/api/users");
+                .requestMatchers(HttpMethod.POST, "/users")
+                .requestMatchers(HttpMethod.DELETE, "/users");
     }
 
     /**
@@ -77,20 +77,20 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         //Swagger관련 경로들
                         .requestMatchers(
-                                "/api/v3/api-docs/**",
-                                "/api/swagger-ui/**",
-                                "/api/swagger-ui.html"
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**")
                         .permitAll()
                         // 인증 없이 접근 가능한 경로들
-                        .requestMatchers("/api/auth/tokens", "/api/auth/tokens/refresh").permitAll()
-                        .requestMatchers("/api/users/email/verification-requests").permitAll()
-                        .requestMatchers("/api/users/email/verification").permitAll()
+                        .requestMatchers("/auth/tokens", "/auth/tokens/refresh").permitAll()
+                        .requestMatchers("/users/email/verification-requests").permitAll()
+                        .requestMatchers("/users/email/verification").permitAll()
                         .requestMatchers("/api/actuator/health").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/api/users").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/users").authenticated()
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
