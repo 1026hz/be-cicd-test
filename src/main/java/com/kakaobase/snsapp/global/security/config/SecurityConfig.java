@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -32,6 +33,25 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final CorsFilter corsFilter;
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+                // 스프링의 context-path("/api")가 앞에 붙는 걸 고려해서
+                // 여기는 반드시 "/api/..." 전체 경로를 써야 합니다
+                .requestMatchers(
+                        "/api/v3/api-docs/**",
+                        "/api/swagger-ui/**",
+                        "/api/swagger-ui.html"
+                )
+                .requestMatchers("/api/auth/tokens", "/api/auth/tokens/refresh")
+                .requestMatchers("/api/users/email/verification-requests")
+                .requestMatchers("/api/users/email/verification")
+                .requestMatchers("/api/actuator/health")
+                .requestMatchers("/actuator/health")
+                .requestMatchers(HttpMethod.POST, "/api/users")
+                .requestMatchers(HttpMethod.DELETE, "/api/users");
+    }
 
     /**
      * Spring Security 필터 체인을 구성합니다.
