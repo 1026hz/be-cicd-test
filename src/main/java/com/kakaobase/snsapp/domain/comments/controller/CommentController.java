@@ -37,7 +37,7 @@ public class CommentController {
     /**
      * 댓글 작성 API
      */
-    @PostMapping("/posts/{postId}/comments")
+    @PostMapping("/api/posts/{postId}/comments")
     @PreAuthorize("isAuthenticated() &&  @accessChecker.canAccessOnComments(#postId, authentication.principal)")
     @Operation(
             summary = "댓글 작성",
@@ -65,7 +65,7 @@ public class CommentController {
     /**
      * 댓글 상세 조회 API
      */
-    @GetMapping("/comments/{commentId}")
+    @GetMapping("/api/comments/{commentId}")
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "댓글 상세 조회",
@@ -89,7 +89,7 @@ public class CommentController {
     /**
      * 댓글 삭제 API
      */
-    @DeleteMapping("/comments/{commentId}")
+    @DeleteMapping("/api/comments/{commentId}")
     @PreAuthorize("@accessChecker.isCommentOwner(#commentId, authentication.principal)")
     @Operation(
             summary = "댓글 삭제",
@@ -112,7 +112,7 @@ public class CommentController {
     /**
      * 게시글의 댓글 목록 조회 API
      */
-    @GetMapping("/posts/{postId}/comments")
+    @GetMapping("/api/posts/{postId}/comments")
     @PreAuthorize("isAuthenticated() && @accessChecker.canAccessOnComments(#postId, authentication.principal)")
     @Operation(
             summary = "게시글의 댓글 목록 조회",
@@ -139,7 +139,7 @@ public class CommentController {
     /**
      * 댓글의 대댓글 목록 조회 API
      */
-    @GetMapping("/comments/{commentId}/recomments")
+    @GetMapping("/api/comments/{commentId}/recomments")
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "댓글의 대댓글 목록 조회",
@@ -167,7 +167,7 @@ public class CommentController {
     /**
      * 댓글 좋아요 추가 API
      */
-    @PostMapping("/comments/{commentId}/likes")
+    @PostMapping("/api/comments/{commentId}/likes")
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "댓글 좋아요 추가",
@@ -190,7 +190,7 @@ public class CommentController {
     /**
      * 댓글 좋아요 취소 API
      */
-    @DeleteMapping("/comments/{commentId}/likes")
+    @DeleteMapping("/api/comments/{commentId}/likes")
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "댓글 좋아요 취소",
@@ -214,7 +214,7 @@ public class CommentController {
     /**
      * 대댓글 좋아요 추가 API
      */
-    @PostMapping("/recomments/{recommentId}/likes")
+    @PostMapping("/api/recomments/{recommentId}/likes")
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "대댓글 좋아요 추가",
@@ -238,7 +238,7 @@ public class CommentController {
     /**
      * 대댓글 좋아요 취소 API
      */
-    @DeleteMapping("/recomments/{recommentId}/likes")
+    @DeleteMapping("/api/recomments/{recommentId}/likes")
     @PreAuthorize("isAuthenticated()")
     @Operation(
             summary = "대댓글 좋아요 취소",
@@ -263,7 +263,7 @@ public class CommentController {
     /**
      * 대댓글 삭제 API
      */
-    @DeleteMapping("/recomments/{recommentId}")
+    @DeleteMapping("/api/recomments/{recommentId}")
     @PreAuthorize("@accessChecker.isRecommentOwner(#recommentId, authentication.principal)")
     @Operation(
             summary = "대댓글 삭제",
@@ -287,7 +287,7 @@ public class CommentController {
     /**
      * 댓글에 좋아요를 누른 회원 목록 조회
      */
-    @GetMapping("comments/{commentId}/likes")
+    @GetMapping("/api/comments/{commentId}/likes")
     @Operation(summary = "댓글 좋아요 유저 목록 조회", description = "댓글에 좋아요를 누른 유저를 조회합니다.")
     public CustomResponse<List<MemberResponseDto.UserInfo>> getCommentLikedMemberList(
             @Parameter(description = "댓글 ID") @PathVariable Long commentId,
@@ -303,7 +303,7 @@ public class CommentController {
     /**
      * 대댓글에 좋아요를 누른 회원 목록 조회
      */
-    @GetMapping("/recomments/{recommentId}/likes")
+    @GetMapping("/api/recomments/{recommentId}/likes")
     @Operation(summary = "대댓글 좋아요 유저 목록 조회", description = "대댓글에 좋아요를 누른 유저를 조회합니다.")
     public CustomResponse<List<MemberResponseDto.UserInfo>> getRecommentLikedMemberList(
             @Parameter(description = "댓글 ID") @PathVariable Long recommentId,
