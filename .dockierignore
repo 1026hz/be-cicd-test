@@ -1,7 +1,6 @@
 .gradle
 .git
 .gitignore
-Dockerfile
 README.md
 build/tmp
 build/test-results

@@ -6,10 +6,10 @@ spring:
 
 app:
   jwt:
-    secure: true
+    secure: false
     refresh:
       domain: ${COOKIE_DOMAIN}
-      same-site: None
+      same-site: Lax
 
 logging:
   level:
