@@ -79,6 +79,7 @@ jobs:
                   VALUE=\\\"\\$(aws ssm get-parameter --name \\\"/kakaobase/dev/\\$KEY\\\" --with-decryption --region ap-northeast-2 --query \\\"Parameter.Value\\\" --output text)\\\"; \
                   DOCKER_ENV_ARGS=\\\"\\$DOCKER_ENV_ARGS -e \\$KEY=\\\"\\$VALUE\\\"\\\"; \
                 done; \
+                DOCKER_ENV_ARGS=\\\"\\$DOCKER_ENV_ARGS -e SPRING_LOGGING_LEVEL_ROOT=DEBUG -e SPRING_LOGGING_LEVEL_COM_KAKAOBASE_SNSAPP_GLOBAL_SECURITY=DEBUG\\\"; \
                 echo \\\"Launching with SPRING_PROFILES_ACTIVE=dev and envs: \\$DOCKER_ENV_ARGS\\\"; \
                 docker run -d --name backend-app -e SPRING_PROFILES_ACTIVE=dev \\$DOCKER_ENV_ARGS -p 8080:8080 '"$IMAGE_URI"'\
               \""
