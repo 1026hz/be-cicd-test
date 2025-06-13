@@ -63,9 +63,6 @@ ai:
   server:
     url: ${AI_SERVER_URL}
 
-server:
-  forward-headers-strategy: framework
-
 management:
   endpoints:
     web:
