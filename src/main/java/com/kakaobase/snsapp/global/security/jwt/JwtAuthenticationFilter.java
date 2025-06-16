@@ -60,34 +60,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // DispatcherServlet 이 /api/* 로 매핑되어 있으면
-        // getServletPath() == "/api"
-        // getPathInfo()    == "/users/email/verification-requests"
-        String path = request.getPathInfo();
-        // (만약 getPathInfo() 가 null 이면, 빈 문자열 처리)
-        if (path == null) path = "";
-
+        String contextPath = request.getContextPath();   // 보통 ""
+        String servletPath = request.getServletPath();   // "/api"
+        String uri = request.getRequestURI();            // "/api/users/email/verification-requests"
+        String path = uri.substring(contextPath.length() + servletPath.length()); // "/users/email/verification-requests"
         String method = request.getMethod();
-        log.debug("▶ 실제 pathInfo = {}, method = {}", path, method);
 
-        // POST /users 도 예외 처리
-        if (pathMatcher.match("/users", path) && "POST".equals(method)) {
-            log.debug("   → 예외1: POST /users");
+        // POST /users (회원가입) 예외
+        if ("/users".equals(path) && "POST".equals(method)) {
             return true;
         }
-
-        // 그 외 excludedPaths 판단
-        for (String pattern : excludedPaths) {
-            boolean match = pathMatcher.match(pattern, path);
-            log.debug("   → exclude '{}' match? {}", pattern, match);
-            if (match) {
-                log.debug("   → 예외2: pattern {}", pattern);
-                return true;
-            }
-        }
-
-        return false;
+        // 나머지 열어줄 엔드포인트
+        return excludedPaths.stream()
+                .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
+
 
 
     /**
