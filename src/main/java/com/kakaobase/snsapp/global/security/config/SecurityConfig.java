@@ -37,20 +37,26 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring()
-                // 스프링의 context-path("/api")가 앞에 붙는 걸 고려해서
-                // 여기는 반드시 "/api/..." 전체 경로를 써야 합니다
+                // Swagger, Actuator
                 .requestMatchers(
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
-                        "/swagger-ui.html"
+                        "/swagger-ui.html",
+                        "/api/v3/api-docs/**",
+                        "/api/swagger-ui/**",
+                        "/api/swagger-ui.html",
+                        "/actuator/health",
+                        "/api/actuator/health"
                 )
-                .requestMatchers("/auth/tokens", "/auth/tokens/refresh")
-                .requestMatchers("/users/email/verification-requests")
-                .requestMatchers("/users/email/verification")
-                .requestMatchers("/api/actuator/health")
-                .requestMatchers("/actuator/health")
-                .requestMatchers(HttpMethod.POST, "/users")
-                .requestMatchers(HttpMethod.DELETE, "/users");
+                // 인증 없이 풀어 줄 엔드포인트
+                .requestMatchers(
+                        "/api/auth/tokens",
+                        "/api/auth/tokens/refresh",
+                        "/api/users/email/verification-requests",
+                        "/api/users/email/verification"
+                )
+                // 회원가입(API POST /api/users)도 인증 제외
+                .requestMatchers(HttpMethod.POST, "/api/users");
     }
 
     /**
