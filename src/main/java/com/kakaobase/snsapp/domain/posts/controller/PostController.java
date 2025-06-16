@@ -35,7 +35,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/posts")
+@RequestMapping("/posts")
 @RequiredArgsConstructor
 @Tag(name = "게시글 API", description = "게시글 CRUD 및 좋아요 기능을 제공하는 API")
 public class PostController {

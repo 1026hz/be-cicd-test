@@ -68,6 +68,8 @@ ai:
 
 server:
   forward-headers-strategy: framework
+  servlet:
+    context-path: /api
 
 management:
   endpoints:

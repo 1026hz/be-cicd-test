@@ -70,7 +70,7 @@ public class S3Controller {
                     content = @Content(schema = @Schema(implementation = CustomResponse.class))
             )
     })
-    @GetMapping("/api/presigned-url")
+    @GetMapping("/presigned-url")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CustomResponse<PresignedUrlResponseDto>> getPresignedUrl(
             @RequestParam @NotBlank(message = "파일명은 필수입니다") String fileName,
