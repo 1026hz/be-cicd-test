@@ -1,3 +1,5 @@
+# .github/workflows/backend-ci-cd-develop.yml
+
 name: Backend CI/CD - Develop
 
 on:
@@ -57,7 +59,7 @@ jobs:
       - name: Build & Push Docker image
         run: |
           IMAGE_URI=${{ secrets.ECR_REPO_BE }}:dev
-          docker build -t $IMAGE_URI .
+          docker build --file Dockerfile -t $IMAGE_URI .
           docker push $IMAGE_URI
 
       - name: Deploy to EC2 via SSM
@@ -88,42 +90,41 @@ jobs:
             --timeout-seconds 600
 
   notify:
-      name: Discord Notification
-      if: always()
-      needs: [ ci, cd ]
-      runs-on: ubuntu-latest
-
-      steps:
-        - name: Send Discord Notification
-          run: |
-            CI_RESULT="${{ needs.ci.result || 'skipped' }}"
-            CD_RESULT="${{ needs.cd.result || 'skipped' }}"
-  
-            COLOR="8359053"
-            STATUS="⚪ CI/CD 실행됨"
-  
-            if [ "$CI_RESULT" = "success" ]; then
-              STATUS="✅ PR용 CI 성공"
-              COLOR="5763719"
-            elif [ "$CI_RESULT" = "failure" ]; then
-              STATUS="❌ PR용 CI 실패"
-              COLOR="15158332"
-            fi
-  
-            if [ "$CD_RESULT" = "success" ]; then
-              STATUS="✅ Push용 CD 성공"
-              COLOR="3066993"
-            elif [ "$CD_RESULT" = "failure" ]; then
-              STATUS="❌ Push용 CD 실패"
-              COLOR="15158332"
-            fi
-  
-            curl -X POST -H "Content-Type: application/json" \
-              -d "{
-                \"embeds\": [{
-                  \"title\": \"🔔 GitHub Actions 결과: ${{ github.workflow }}\",
-                  \"description\": \"$STATUS\n브랜치: \`${{ github.ref_name }}\`\n커밋: \`${{ github.actor }}\`\n[👉 실행 로그 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
-                  \"color\": $COLOR
-                }]
-              }" \
-              ${{ secrets.DISCORD_WEBHOOK_URL }}
+    name: Discord Notification
+    if: always()
+    needs: [ci, cd]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        run: |
+          CI_RESULT="${{ needs.ci.result || 'skipped' }}"
+          CD_RESULT="${{ needs.cd.result || 'skipped' }}"
+          
+          COLOR="8359053"
+          STATUS="⚪ CI/CD 실행됨"
+          
+          if [ "$CI_RESULT" = "success" ]; then
+            STATUS="✅ PR용 CI 성공"
+            COLOR="5763719"
+          elif [ "$CI_RESULT" = "failure" ]; then
+            STATUS="❌ PR용 CI 실패"
+            COLOR="15158332"
+          fi
+          
+          if [ "$CD_RESULT" = "success" ]; then
+            STATUS="✅ Push용 CD 성공"
+            COLOR="3066993"
+          elif [ "$CD_RESULT" = "failure" ]; then
+            STATUS="❌ Push용 CD 실패"
+            COLOR="15158332"
+          fi
+          
+          curl -X POST -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"🔔 GitHub Actions 결과: ${{ github.workflow }}\",
+                \"description\": \"$STATUS\n브랜치: \`${{ github.ref_name }}\`\n커밋: \`${{ github.actor }}\`\n[👉 실행 로그 보기](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
+                \"color\": $COLOR
+              }]
+            }" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
