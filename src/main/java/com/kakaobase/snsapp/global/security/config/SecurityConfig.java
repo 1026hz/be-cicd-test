@@ -30,44 +30,40 @@ public class SecurityConfig {
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final CorsFilter corsFilter;
 
+    /**
+     * Swagger UI/static 리소스만 필터 체인 바깥으로 빼고,
+     * 나머지 /api/** 요청은 모두 SecurityFilterChain 을 타게 합니다.
+     */
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring()
-                // Swagger UI & API Docs
                 .requestMatchers(
-                        "/api/swagger-ui/**",
-                        "/api/v3/api-docs/**"
-                )
-                // Actuator 헬스체크 자체 (필터 단계 제외)
-                .requestMatchers("/api/actuator/health",
-                        "/actuator/health")
-                // 인증 없이 풀어 줄 엔드포인트
-                .requestMatchers(
-                        "/api/auth/tokens",
-                        "/api/auth/tokens/refresh",
-                        "/api/users/email/verification-requests",
-                        "/api/users/email/verification"
-                )
-                // 회원가입
-                .requestMatchers(HttpMethod.POST, "/api/users");
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**"
+                );
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // REST API 이므로 CSRF, 기본 세션, 폼 로그인, HTTP Basic 모두 끕니다
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
+
+                // CORS 필터
                 .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+
+                // 경로별 권한 처리
                 .authorizeHttpRequests(auth -> auth
                         // CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Swagger & Docs
-                        .requestMatchers("/api/swagger-ui/**", "/api/v3/api-docs/**").permitAll()
+                        // Swagger, API Docs
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-                        // Public API
+                        // JWT 토큰 발급/갱신, 이메일 인증, 회원가입, 헬스체크는 인증 없이 허용
                         .requestMatchers(HttpMethod.POST, "/api/auth/tokens").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/tokens/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/email/verification-requests").permitAll()
@@ -78,10 +74,14 @@ public class SecurityConfig {
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
+
+                // 인증/인가 예외 처리
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
+
+                // JWT 필터 등록
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
