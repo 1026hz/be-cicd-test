@@ -16,6 +16,8 @@ spring:
         format_sql: true
         jdbc:
           time_zone: UTC
+  security:
+    debug: true
   cloud:
     aws:
       credentials:
