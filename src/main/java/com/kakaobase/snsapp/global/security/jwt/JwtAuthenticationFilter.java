@@ -44,17 +44,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String uri = request.getRequestURI();   // ex) "/api/users/email/verification-requests"
-        String method = request.getMethod();
-        log.debug("▷ shouldNotFilter: uri={} method={}", uri, method);
+        String uri = request.getRequestURI();
+        log.debug("▶ shouldNotFilter URI = {}", uri);
 
-        // POST /api/users (회원가입) 도 제외
-        if ("/api/users".equals(uri) && "POST".equals(method)) {
-            log.debug("   → excluded: POST /api/users");
+        // POST 회원가입 예외
+        if ("POST".equals(request.getMethod()) && uri.equals("/api/users")) {
             return true;
         }
 
-        // 기타 excluded paths
+        // 기타 excluded 경로
         for (String pattern : EXCLUDED_PATHS) {
             if (pathMatcher.match(pattern, uri)) {
                 log.debug("   → excluded by pattern {}", pattern);
@@ -63,6 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return false;
     }
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

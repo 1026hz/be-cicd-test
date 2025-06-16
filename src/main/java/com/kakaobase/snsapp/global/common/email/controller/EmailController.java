@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,8 @@ public class EmailController {
     public CustomResponse<Void> requestEmailVerification(
             @Parameter(description = "이메일 인증 요청 정보", required = true)
             @Valid @RequestBody EmailRequest.EmailVerificationRequest request) {
+
+
 
         emailVerificationService.sendVerificationCode(request.email(), request.purpose());
 
