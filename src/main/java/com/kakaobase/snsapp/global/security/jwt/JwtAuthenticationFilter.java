@@ -60,19 +60,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
+        // DispatcherServlet 이 “/” 에 매핑되어 있으면
+        // getServletPath() == "/api"
+        // getPathInfo()    == "/users/…"
+        String path = request.getServletPath();  // ← 변경!
         String method = request.getMethod();
+        log.debug("▶ 실제 servletPath = {}, method = {}", path, method);
 
-        if (pathMatcher.match("/users", path) && method.equals("POST")) {
+        // POST /api/users 예외 처리
+        if (pathMatcher.match("/api/users", path) && "POST".equals(method)) {
             return true;
         }
 
-        return excludedPaths.stream()
-                .anyMatch(pattern -> pathMatcher.match(pattern, path));
+        // excludedPaths 리스트에도 "/api/..." 로 적어두세요
+        for (String pattern : excludedPaths) {
+            if (pathMatcher.match(pattern, path)) {
+                return true;
+            }
+        }
+        return false;
     }
-
-
-
 
     /**
      * JWT 토큰을 검증하고 인증 정보를 설정하는 필터 메서드입니다.
