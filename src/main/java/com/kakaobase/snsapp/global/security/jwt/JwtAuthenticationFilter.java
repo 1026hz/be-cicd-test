@@ -3,6 +3,7 @@ package com.kakaobase.snsapp.global.security.jwt;
 import com.kakaobase.snsapp.domain.auth.principal.CustomUserDetails;
 import com.kakaobase.snsapp.domain.auth.principal.CustomUserDetailsService;
 import com.kakaobase.snsapp.global.error.exception.CustomException;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,6 +42,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/swagger-ui/**",
             "/api/v3/api-docs/**"
     );
+
+    @PostConstruct
+    public void init() {
+        System.out.println("✅ JwtAuthenticationFilter 빈 등록 완료!");
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
