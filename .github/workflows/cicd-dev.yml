@@ -59,7 +59,7 @@ jobs:
       - name: Build & Push Docker image
         run: |
           IMAGE_URI=${{ secrets.ECR_REPO_BE }}:dev
-          docker build --file Dockerfile -t $IMAGE_URI .
+          docker build --no-cache --file Dockerfile -t $IMAGE_URI .
           docker push $IMAGE_URI
 
       - name: Deploy to EC2 via SSM
