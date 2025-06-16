@@ -16,6 +16,9 @@ spring:
         format_sql: true
         jdbc:
           time_zone: UTC
+  mvc:
+    servlet:
+      path: /api
   cloud:
     aws:
       credentials:
@@ -62,6 +65,9 @@ app:
 ai:
   server:
     url: ${AI_SERVER_URL}
+
+server:
+  forward-headers-strategy: framework
 
 management:
   endpoints:
