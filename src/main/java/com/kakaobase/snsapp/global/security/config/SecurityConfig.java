@@ -39,7 +39,8 @@ public class SecurityConfig {
                         "/api/v3/api-docs/**"
                 )
                 // Actuator 헬스체크 자체 (필터 단계 제외)
-                .requestMatchers("/api/actuator/health")
+                .requestMatchers("/api/actuator/health",
+                        "/actuator/health")
                 // 인증 없이 풀어 줄 엔드포인트
                 .requestMatchers(
                         "/api/auth/tokens",
