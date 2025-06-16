@@ -26,6 +26,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @Tag(name = "댓글 API", description = "게시글 댓글 관련 API")
 public class CommentController {
