@@ -2,6 +2,7 @@ package com.kakaobase.snsapp.global.security.config;
 
 import com.kakaobase.snsapp.global.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -45,47 +47,48 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // 1) 첫 진입 시 jwtAuthenticationFilter 가 null 이 아닌지 찍어보고
+        log.debug("⚙️ filterChain() 시작 — jwtAuthenticationFilter 주입됨? {}", jwtAuthenticationFilter != null);
+
+        // 기존 체인 설정
         http
-                // REST API 이므로 CSRF, 기본 세션, 폼 로그인, HTTP Basic 모두 끕니다
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable);
 
-                // CORS 필터
-                .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+        // 2) CORS 필터 등록 직전/직후
+        log.debug("⚙️ CORS 필터 등록 전");
+        http.addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class);
+        log.debug("⚙️ CORS 필터 등록 후");
 
-                // 경로별 권한 처리
-                .authorizeHttpRequests(auth -> auth
-                        // CORS preflight
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+        // 인가 설정
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/tokens").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/tokens/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users/email/verification-requests").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users/email/verification").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/actuator/health").permitAll()
+                .anyRequest().authenticated()
+        );
 
-                        // Swagger, API Docs
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+        http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler)
+        );
 
-                        // JWT 토큰 발급/갱신, 이메일 인증, 회원가입, 헬스체크는 인증 없이 허용
-                        .requestMatchers(HttpMethod.POST, "/api/auth/tokens").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/tokens/refresh").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/email/verification-requests").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/email/verification").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/actuator/health").permitAll()
+        // 3) JwtAuthenticationFilter 등록 직전/직후
+        log.debug("⚙️ JwtAuthenticationFilter 등록 전");
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        log.debug("⚙️ JwtAuthenticationFilter 등록 후");
 
-                        // 그 외 모든 요청은 인증 필요
-                        .anyRequest().authenticated()
-                )
-
-                // 인증/인가 예외 처리
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler)
-                )
-
-                // JWT 필터 등록
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
+        // 최종 빌드
         return http.build();
     }
+
 
     @Bean
     public AuthenticationManager authenticationManager(
