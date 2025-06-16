@@ -56,12 +56,12 @@ jobs:
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.ECR_REPO_BE }}:$IMAGE_TAG -t ${{ secrets.ECR_REPO_BE }}:latest .
+        run: docker build -t ${{ secrets.ECR_REPO_BE }}:$IMAGE_TAG -t ${{ secrets.ECR_REPO_BE }}:dev .
 
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.ECR_REPO_BE }}:$IMAGE_TAG
-          docker push ${{ secrets.ECR_REPO_BE }}:latest
+          docker push ${{ secrets.ECR_REPO_BE }}:dev
 
       - name: Save image info to JSON
         run: |
