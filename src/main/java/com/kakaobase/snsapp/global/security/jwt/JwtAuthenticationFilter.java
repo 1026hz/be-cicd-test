@@ -60,20 +60,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String contextPath = request.getContextPath();   // 보통 ""
-        String servletPath = request.getServletPath();   // "/api"
-        String uri = request.getRequestURI();            // "/api/users/email/verification-requests"
-        String path = uri.substring(contextPath.length() + servletPath.length()); // "/users/email/verification-requests"
+        String path = request.getServletPath();
         String method = request.getMethod();
 
-        // POST /users (회원가입) 예외
-        if ("/users".equals(path) && "POST".equals(method)) {
+        if (pathMatcher.match("/users", path) && method.equals("POST")) {
             return true;
         }
-        // 나머지 열어줄 엔드포인트
+
         return excludedPaths.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
+
 
 
 
