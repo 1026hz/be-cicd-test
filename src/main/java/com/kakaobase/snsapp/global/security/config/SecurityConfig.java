@@ -80,10 +80,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
         );
 
-        // 3) JwtAuthenticationFilter 등록 직전/직후
-        log.debug("⚙️ JwtAuthenticationFilter 등록 전");
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        log.debug("⚙️ JwtAuthenticationFilter 등록 후");
 
         // 최종 빌드
         return http.build();
