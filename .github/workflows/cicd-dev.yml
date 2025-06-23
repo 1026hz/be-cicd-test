@@ -89,11 +89,10 @@ jobs:
           aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --comment "GitHub Actions 배포" \
-            --targets ${{ secrets.SSM_INSTANCE_TAG }} \
+            --instance-ids ${{ secrets.SSM_INSTANCE_TAG }} \
             --parameters commands='[
               "docker stop backend-app || true",
               "docker rm backend-app || true",
-              "docker pull '"$IMAGE_URI"'",
               "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin '"${{ secrets.ECR_REPO_BE }}"'",
               "bash -c \"\
                 KEYS=\\\"DISCORD_ERROR_WEBHOOK_URL JWT_SECRET MYSQL_URL MYSQL_PASSWORD COOKIE_DOMAIN EMAIL EMAIL_PASSWORD BUCKET_NAME AWS_ACCESS_KEY AWS_SECRET_KEY AI_SERVER_URL\\\"; \
