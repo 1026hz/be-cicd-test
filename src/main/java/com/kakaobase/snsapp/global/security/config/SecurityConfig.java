@@ -71,8 +71,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/users/email/verification-requests").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/email/verification").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/actuator/health").permitAll()
-                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/actuator/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
                 .anyRequest().authenticated()
         );
 
