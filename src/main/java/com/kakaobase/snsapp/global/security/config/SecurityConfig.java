@@ -64,6 +64,7 @@ public class SecurityConfig {
 
         // 인가 설정
         http.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/tokens").permitAll()

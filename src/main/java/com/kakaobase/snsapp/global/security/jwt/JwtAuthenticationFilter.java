@@ -32,6 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 필터를 적용하지 않을 전체 경로 목록 (풀 패스 + 와일드카드)
     private static final List<String> EXCLUDED_PATHS = List.of(
+            "/**",
             "/api/auth/tokens",
             "/api/auth/tokens/refresh",
             "/api/users",
