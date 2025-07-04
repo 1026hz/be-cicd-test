@@ -63,7 +63,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Set deployment variables
         run: |
@@ -93,7 +93,6 @@ jobs:
             --parameters commands='[
               "docker stop backend-app || true",
               "docker rm backend-app || true",
-              "docker pull '"$IMAGE_URI"'",
               "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin '"${{ secrets.ECR_REPO_BE }}"'",
               "bash -c \"\
                 KEYS=\\\"DISCORD_ERROR_WEBHOOK_URL JWT_SECRET MYSQL_URL MYSQL_PASSWORD COOKIE_DOMAIN EMAIL EMAIL_PASSWORD BUCKET_NAME AWS_ACCESS_KEY AWS_SECRET_KEY AI_SERVER_URL\\\"; \
